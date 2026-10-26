@@ -88,25 +88,31 @@ _zig-target platform:
         *) echo "unknown platform {{ platform }} (one of {{ platforms }})" >&2; exit 1 ;;
     esac
 
-# This host's platform, as os-arch. On windows the processor architecture
-# comes from the OS: git-bash's own uname reports the emulated x86_64 on arm64.
+# This host's platform, as os-arch. In CI, RUNNER_OS and RUNNER_ARCH are the
+# truth: Git for Windows' arm64 build ships an x86_64 bash, so uname and
+# PROCESSOR_ARCHITECTURE report amd64 there. Elsewhere the pinned zig's own
+# native target says what the machine is.
 _host-platform:
     #!/usr/bin/env bash
     set -euo pipefail
-    case "$(uname -s)" in
-        Linux) os=linux ;;
-        Darwin) os=darwin ;;
-        MINGW* | MSYS* | CYGWIN*) os=windows ;;
-        *) echo "unsupported host $(uname -s)" >&2; exit 1 ;;
-    esac
-    if [ "${os}" = windows ]; then
-        machine=${PROCESSOR_ARCHITECTURE:-}
+    if [ -n "${RUNNER_OS:-}" ] && [ -n "${RUNNER_ARCH:-}" ]; then
+        os=${RUNNER_OS}
+        machine=${RUNNER_ARCH}
     else
-        machine=$(uname -m)
+        native=$(zig env | sed -n -E 's/^ *\.target = "([^"]*)".*/\1/p')
+        machine=${native%%-*}
+        os=${native#*-}
+        os=${os%%[.-]*}
     fi
+    case "${os}" in
+        Linux | linux) os=linux ;;
+        macOS | macos) os=darwin ;;
+        Windows | windows) os=windows ;;
+        *) echo "unsupported host ${os}" >&2; exit 1 ;;
+    esac
     case "${machine}" in
-        x86_64 | amd64 | AMD64) arch=amd64 ;;
-        arm64 | aarch64 | ARM64) arch=arm64 ;;
+        X64 | x86_64) arch=amd64 ;;
+        ARM64 | aarch64) arch=arm64 ;;
         *) echo "unsupported architecture ${machine}" >&2; exit 1 ;;
     esac
     echo "${os}-${arch}"
