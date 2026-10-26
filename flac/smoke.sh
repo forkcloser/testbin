@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Round-trip random PCM through flac and back, byte for byte, and check that
+# Round-trip arbitrary PCM through flac and back, byte for byte, and check that
 # flac -t accepts the stream and metaflac reads the MD5 of the original audio.
 #   smoke.sh <directory holding flac and metaflac>
 set -euo pipefail
@@ -16,8 +16,11 @@ trap 'rm -rf "${work}"' EXIT
 "${flac}" --version
 "${metaflac}" --version
 
-# Ten seconds of 16-bit stereo at 44.1 kHz.
-head -c 1764000 /dev/urandom > "${work}/in.raw"
+# Any bytes are valid 16-bit samples: the audio is the flac binary's own first
+# bytes, a whole number of stereo frames. A regular file, not /dev/urandom,
+# which git-bash's path conversion hands to a native head as a broken path.
+size=$(wc -c < "${flac}" | tr -d ' ')
+head -c $((size / 4 * 4)) "${flac}" > "${work}/in.raw"
 raw=(--force-raw-format --endian=little --sign=signed)
 "${flac}" -s "${raw[@]}" --channels=2 --bps=16 --sample-rate=44100 -8 -o "${work}/a.flac" "${work}/in.raw"
 "${flac}" -s -d "${raw[@]}" -o "${work}/out.raw" "${work}/a.flac"
