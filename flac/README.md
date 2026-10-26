@@ -17,6 +17,7 @@ The sources and the binaries built from them are upstream's, under upstream's li
 `flac` and `metaflac` programs under the GNU GPL version 2 or later (`COPYING.GPL`), libFLAC
 under the Xiph.org BSD-style licence (`COPYING.Xiph`), and some of the shared helpers compiled
 into both (getopt, the replaygain code) under the GNU LGPL (`COPYING.LGPL`). Each release
-archive carries the three notices and upstream's `AUTHORS`, and the corresponding source is the
-release's `flac-<version>.tar.xz`, upstream's own tarball as `pins.yaml` pins it. This
+archive carries the three notices and upstream's `AUTHORS`. The corresponding source is
+upstream's release tarball, pinned in `pins.yaml` (url and sha256):
+`https://github.com/xiph/flac/releases/download/<version>/flac-<version>.tar.xz`. This
 directory's own files are under the repository's Apache-2.0 licence.

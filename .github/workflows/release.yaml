@@ -36,12 +36,17 @@ jobs:
         uses: ./.github/actions/setup-hermetic
       - name: Build every tool for every platform
         run: just build
+      - name: The release notes' source section
+        run: just release-notes > .build/notes.md
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist
-          path: |
-            .build/dist/*.tar.gz
-            .build/dist/*.tar.xz
+          path: .build/dist/*.tar.gz
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: notes
+          path: .build/notes.md
           if-no-files-found: error
 
   # The published archives themselves, run where they will run: a binary that
@@ -100,7 +105,7 @@ jobs:
           name: dist
           path: dist
       - name: Checksums
-        run: cd dist && sha256sum -- *.tar.gz *.tar.xz > checksums.txt
+        run: cd dist && sha256sum -- *.tar.gz > checksums.txt
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           # Everything published, checksums.txt included: no unattested asset.
@@ -116,4 +121,19 @@ jobs:
             gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber dist/*
           else
             gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --verify-tag --generate-notes dist/*
+          fi
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: notes
+          path: notes
+      - name: The corresponding source in the release notes
+        # Appended to the notes the page already has; a rerun finds the section
+        # and leaves the notes as they are.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json body --jq .body > notes/current.md
+          if ! grep -q '^## Corresponding source$' notes/current.md; then
+            { cat notes/current.md; echo; cat notes/notes.md; } > notes/full.md
+            gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --notes-file notes/full.md
           fi

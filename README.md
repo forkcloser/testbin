@@ -31,10 +31,12 @@ sources, and states the upstream licence its sources, patches and binaries are u
 ## Using a build
 
 A release (`vX.Y.Z`) carries `<tool>-<upstream version>-<os>-<arch>.tar.gz` per tool and
-platform, each tool's pinned upstream source tarball (the corresponding source of its binaries),
-`checksums.txt`, and a GitHub build provenance attestation over every asset
+platform, `checksums.txt`, and a GitHub build provenance attestation over every asset
 (`gh attestation verify <asset> --repo forkcloser/testbin`). Consume them through hermetic, like
-any other pinned tool.
+any other pinned tool. The corresponding source of each tool's binaries is upstream's release,
+pinned in `pins.yaml` (url and sha256), e.g. flac's
+`https://github.com/xiph/flac/releases/download/<version>/flac-<version>.tar.xz`; each release's
+notes link it.
 
 ## Working on it
 

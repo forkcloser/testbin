@@ -17,8 +17,7 @@ security: do::security::default
 build: (flac platforms)
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
-# flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz,
-# with upstream's source tarball beside them.
+# flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
 flac +targets: (_fetch "flac")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -26,10 +25,6 @@ flac +targets: (_fetch "flac")
     version=$(limen pins get flac version)
     src="${LIMEN_BUILD}/src/flac-${version}"
     mkdir -p "${LIMEN_BUILD}/dist"
-    # The GPL's corresponding source travels with the binaries: upstream's own
-    # tarball, the one pins.yaml pins, published beside the archives.
-    url=$(limen pins get flac url)
-    cp "${LIMEN_BUILD}/src/${url##*/}" "${LIMEN_BUILD}/dist/"
     set -- {{ targets }}
     for platform in "$@"; do
         out="${LIMEN_BUILD}/flac/${platform}"
@@ -55,8 +50,19 @@ flac-test:
     just flac "${platform}"
     flac/smoke.sh "${LIMEN_BUILD}/flac/${platform}/bin"
 
+# The release notes' source section: each tool's upstream release, as pins.yaml
+# pins it, the corresponding source of the binaries built from it.
+release-notes:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "## Corresponding source"
+    echo
+    echo "Each tool's binaries are built from upstream's release, pinned in pins.yaml (url and sha256):"
+    echo
+    echo "- flac $(limen pins get flac version): $(limen pins get flac url)"
+
 # Fetch a pinned source into $LIMEN_BUILD/src, verify it against pins.yaml on
-# every run (the tarball is published beside the binaries), and unpack it.
+# every run (a reused build directory keeps the tarball), and unpack it.
 _fetch name:
     #!/usr/bin/env bash
     set -euo pipefail
