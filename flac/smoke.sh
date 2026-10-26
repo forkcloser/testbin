@@ -24,7 +24,13 @@ raw=(--force-raw-format --endian=little --sign=signed)
 cmp "${work}/in.raw" "${work}/out.raw"
 "${flac}" -s -t "${work}/a.flac"
 
-want=$(md5sum "${work}/in.raw" | cut -d' ' -f1)
+# md5sum where it exists (linux, git-bash, hermetic's coreutils); the stock
+# macOS images have only md5.
+if command -v md5sum > /dev/null 2>&1; then
+  want=$(md5sum "${work}/in.raw" | cut -d' ' -f1)
+else
+  want=$(md5 -q "${work}/in.raw")
+fi
 got=$("${metaflac}" --show-md5sum "${work}/a.flac" | tr -d '\r')
 if [ "${want}" != "${got}" ]; then
   echo "metaflac --show-md5sum: ${got}, the audio's MD5 is ${want}" >&2

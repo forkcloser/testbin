@@ -17,7 +17,8 @@ security: do::security::default
 build: (flac platforms)
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
-# flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
+# flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz,
+# with upstream's source tarball beside them.
 flac +targets: (_fetch "flac")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -25,6 +26,10 @@ flac +targets: (_fetch "flac")
     version=$(limen pins get flac version)
     src="${LIMEN_BUILD}/src/flac-${version}"
     mkdir -p "${LIMEN_BUILD}/dist"
+    # The GPL's corresponding source travels with the binaries: upstream's own
+    # tarball, the one pins.yaml pins, published beside the archives.
+    url=$(limen pins get flac url)
+    cp "${LIMEN_BUILD}/src/${url##*/}" "${LIMEN_BUILD}/dist/"
     set -- {{ targets }}
     for platform in "$@"; do
         out="${LIMEN_BUILD}/flac/${platform}"
@@ -50,28 +55,24 @@ flac-test:
     just flac "${platform}"
     flac/smoke.sh "${LIMEN_BUILD}/flac/${platform}/bin"
 
-# Run flac's round trip on an unpacked release archive (the release workflow
-# tests the published binaries on each platform with it).
-flac-smoke dir:
-    flac/smoke.sh "{{ dir }}"
-
-# Fetch a pinned source into $LIMEN_BUILD/src and verify it against pins.yaml.
+# Fetch a pinned source into $LIMEN_BUILD/src, verify it against pins.yaml on
+# every run (the tarball is published beside the binaries), and unpack it.
 _fetch name:
     #!/usr/bin/env bash
     set -euo pipefail
     version=$(limen pins get {{ name }} version)
-    dir="${LIMEN_BUILD}/src"
-    [ -d "${dir}/{{ name }}-${version}" ] && exit 0
-    mkdir -p "${dir}"
     url=$(limen pins get {{ name }} url)
     sum=$(limen pins get {{ name }} sha256)
+    dir="${LIMEN_BUILD}/src"
     archive="${dir}/${url##*/}"
-    curl -fsSL --retry 3 -o "${archive}" "${url}"
+    mkdir -p "${dir}"
+    [ -f "${archive}" ] || curl -fsSL --retry 3 -o "${archive}" "${url}"
     if ! echo "${sum}  ${archive}" | sha256sum -c - > /dev/null; then
         echo "${archive}: sha256 does not match pins.yaml's {{ name }} ${version}" >&2
         rm -f "${archive}"
         exit 1
     fi
+    rm -rf "${dir:?}/{{ name }}-${version}"
     tar -xf "${archive}" -C "${dir}"
 
 # The zig target of a platform: musl on linux (static), the GNU ABI on windows.
