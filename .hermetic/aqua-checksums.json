@@ -351,6 +351,31 @@
       "algorithm": "sha256"
     },
     {
+      "id": "http/ziglang.org/download/0.15.2/zig-aarch64-linux-0.15.2.tar.xz",
+      "checksum": "958ED7D1E00D0EA76590D27666EFBF7A932281B3D7BA0C6B01B0FF26498F667F",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "http/ziglang.org/download/0.15.2/zig-aarch64-macos-0.15.2.tar.xz",
+      "checksum": "3CC2BAB367E185CDFB27501C4B30B1B0653C28D9F73DF8DC91488E66ECE5FA6B",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "http/ziglang.org/download/0.15.2/zig-aarch64-windows-0.15.2.zip",
+      "checksum": "B926465F8872BF983422257CD9EC248BB2B270996FBE8D57872CCA13B56FC370",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "http/ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz",
+      "checksum": "02AA270F183DA276E5B5920B1DAC44A63F1A49E55050EBDE3AECC9EB82F93239",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "http/ziglang.org/download/0.15.2/zig-x86_64-windows-0.15.2.zip",
+      "checksum": "3A0ED1E8799A2F8CE2A6E6290A9FF22E6906F8227865911FB7DDEDC3CC14CB0C",
+      "algorithm": "sha256"
+    },
+    {
       "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.575.0/registry.yaml",
       "checksum": "340BC6F1FA7124077830D090576F9DC538212FDD7869F8DE973E81B0124EFFA1",
       "algorithm": "sha256"

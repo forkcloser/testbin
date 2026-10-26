@@ -28,12 +28,29 @@ jobs:
       # with:
       #   os: '["ubuntu-24.04", "macos-15"]'
 
+  # Every tool for every platform, cross-built from one linux host with the
+  # pinned zig. The verify legs build their own platform and run it (`just
+  # test`); this job proves the targets no runner is (darwin amd64) build too.
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install hermetic (pinned, verified)
+        uses: ./.github/actions/setup-hermetic
+      - name: Build every tool for every platform
+        run: just build
+
   # The ONE required status check (defaultRequiredChecks in
   # internal/github/audit.go). Requiring the lanes by name would bake the
   # runner list into every ruleset; this job collapses them to one stable
   # name. A project job joins `needs` and the assertion below.
   gate:
-    needs: [limen]
+    needs: [limen, build]
     # always(), and the result asserted explicitly. Without always() a failed
     # or cancelled dependency SKIPS this job instead of failing it, and a
     # skipped required check does not block a merge — branch protection that
@@ -48,8 +65,9 @@ jobs:
         env:
           # Via env, never interpolated into the script: the shell sees data,
           # not something the expression layer can rewrite into code.
-          RESULT: ${{ needs.limen.result }}
+          LIMEN: ${{ needs.limen.result }}
+          BUILD: ${{ needs.build.result }}
         shell: bash
         run: |
-          printf 'limen: %s\n' "$RESULT"
-          [ "$RESULT" = "success" ]
+          printf 'limen: %s\nbuild: %s\n' "$LIMEN" "$BUILD"
+          [ "$LIMEN" = "success" ] && [ "$BUILD" = "success" ]
