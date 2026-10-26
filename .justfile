@@ -10,11 +10,11 @@ platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 wi
 lint: do::lint::default
 fix: do::fix::default
 # Each tool built for this host and run on it.
-test: flac-test
+test: flac-test drflac-test
 security: do::security::default
 
 # Build every tool for every platform into $LIMEN_BUILD/dist.
-build: (flac platforms)
+build: (flac platforms) (drflac platforms)
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
 # flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
@@ -50,6 +50,42 @@ flac-test:
     just flac "${platform}"
     flac/smoke.sh "${LIMEN_BUILD}/flac/${platform}/bin"
 
+# Build drflac (a FLAC decoder on dr_flac) for the given platforms, archived
+# with dr_libs' licence and this repository's (main.c is ours) into
+# $LIMEN_BUILD/dist/drflac-<version>-<platform>.tar.gz.
+drflac +targets: (_fetch "drflac")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export ZIG_GLOBAL_CACHE_DIR="${LIMEN_BUILD}/zig/global" ZIG_LOCAL_CACHE_DIR="${LIMEN_BUILD}/zig/local"
+    version=$(limen pins get drflac version)
+    src="${LIMEN_BUILD}/src/drflac-${version}"
+    mkdir -p "${LIMEN_BUILD}/dist"
+    set -- {{ targets }}
+    for platform in "$@"; do
+        out="${LIMEN_BUILD}/drflac/${platform}"
+        rm -rf "${out}"
+        drflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
+        x=""
+        case "${platform}" in windows-*) x=".exe" ;; esac
+        name="drflac-${version}-${platform}"
+        stage="${LIMEN_BUILD}/stage/${name}"
+        rm -rf "${stage}"
+        mkdir -p "${stage}"
+        cp "${out}/bin/drflac${x}" "${stage}/"
+        cp "${src}/LICENSE" "${stage}/LICENSE.dr_libs"
+        cp LICENSE "${stage}/LICENSE"
+        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
+        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+    done
+
+# Build drflac for this host and decode flac's encodings of arbitrary PCM with it.
+drflac-test: flac-test
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    just drflac "${platform}"
+    drflac/smoke.sh "${LIMEN_BUILD}/drflac/${platform}/bin" "${LIMEN_BUILD}/flac/${platform}/bin"
+
 # The release notes' source section: each tool's upstream release, as pins.yaml
 # pins it, the corresponding source of the binaries built from it.
 release-notes:
@@ -60,17 +96,25 @@ release-notes:
     echo "Each tool's binaries are built from upstream's release, pinned in pins.yaml (url and sha256):"
     echo
     echo "- flac $(limen pins get flac version): $(limen pins get flac url)"
+    echo "- dr_flac $(limen pins get drflac version): $(limen pins get drflac url)"
 
-# Fetch a pinned source into $LIMEN_BUILD/src, verify it against pins.yaml on
-# every run (a reused build directory keeps the tarball), and unpack it.
+# Fetch a pinned source to $LIMEN_BUILD/src/<name>-<version>.<ext>, verify it
+# against pins.yaml on every run (a reused build directory keeps the tarball),
+# and unpack it into $LIMEN_BUILD/src/<name>-<version>, whatever the top
+# directory upstream's tarball has.
 _fetch name:
     #!/usr/bin/env bash
     set -euo pipefail
     version=$(limen pins get {{ name }} version)
     url=$(limen pins get {{ name }} url)
     sum=$(limen pins get {{ name }} sha256)
+    case "${url}" in
+        *.tar.xz) ext=tar.xz ;;
+        *.tar.gz) ext=tar.gz ;;
+        *) echo "{{ name }}: unsupported archive ${url##*/}" >&2; exit 1 ;;
+    esac
     dir="${LIMEN_BUILD}/src"
-    archive="${dir}/${url##*/}"
+    archive="${dir}/{{ name }}-${version}.${ext}"
     mkdir -p "${dir}"
     [ -f "${archive}" ] || curl -fsSL --retry 3 -o "${archive}" "${url}"
     if ! echo "${sum}  ${archive}" | sha256sum -c - > /dev/null; then
@@ -79,7 +123,8 @@ _fetch name:
         exit 1
     fi
     rm -rf "${dir:?}/{{ name }}-${version}"
-    tar -xf "${archive}" -C "${dir}"
+    mkdir -p "${dir}/{{ name }}-${version}"
+    tar -xf "${archive}" -C "${dir}/{{ name }}-${version}" --strip-components=1
 
 # The zig target of a platform: musl on linux (static), the GNU ABI on windows.
 _zig-target platform:

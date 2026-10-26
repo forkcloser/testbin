@@ -13,3 +13,14 @@ pins:
     digest:
       version: 1.5.0
       sha256: f2c1c76592a82ffff8413ba3c4a1299b6c7ab06c734dee03fd88630485c2b920
+  # dr_libs tags each library's releases (flac-X.Y.Z); the archive is GitHub's
+  # tarball of that tag. dr_flac is public domain or MIT-0, its choice.
+  - name: drflac
+    renovate: github-tags mackron/dr_libs
+    extract-version: ^flac-(?<version>.*)$
+    version: 0.13.3
+    url: https://github.com/mackron/dr_libs/archive/refs/tags/flac-${version}.tar.gz
+    verify: download
+    digest:
+      version: 0.13.3
+      sha256: 2103bb689889f22c8ee0f18dd7fe7cc7ff3addbbdc5e5d43595474afc14e479d

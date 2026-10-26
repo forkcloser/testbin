@@ -85,7 +85,9 @@ jobs:
           for archive in dist/*-"${PLATFORM}".tar.gz; do
             tar -xzf "${archive}" -C unpacked
           done
-          bash flac/smoke.sh unpacked/flac-*-"${PLATFORM}"
+          flac=$(echo unpacked/flac-*-"${PLATFORM}")
+          bash flac/smoke.sh "${flac}"
+          bash drflac/smoke.sh unpacked/drflac-*-"${PLATFORM}" "${flac}"
 
   publish:
     # Tag pushes only: a workflow_dispatch run stops after the smoke legs.
