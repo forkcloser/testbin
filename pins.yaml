@@ -1,0 +1,15 @@
+# The upstream sources testbin builds, pinned by version and digest (limen's
+# book, tooling.md, "Pinned artifacts beyond aqua"). Each tool's build reads its
+# entry back with `limen pins get <name> url|sha256`; Renovate proposes the
+# bumps from the renovate: lines and `limen pins refresh` recomputes the digest.
+pins:
+  # xiph publishes no signature or checksum beside the GitHub release asset:
+  # TLS is the whole guarantee.
+  - name: flac
+    renovate: github-releases xiph/flac
+    version: 1.5.0
+    url: https://github.com/xiph/flac/releases/download/${version}/flac-${version}.tar.xz
+    verify: download
+    digest:
+      version: 1.5.0
+      sha256: f2c1c76592a82ffff8413ba3c4a1299b6c7ab06c734dee03fd88630485c2b920

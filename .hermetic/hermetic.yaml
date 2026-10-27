@@ -32,4 +32,5 @@ packages:
   # Every other tool limen requires comes from the import, at the versions
   # this limen pins: a limen bump changes that file, never this list
   # (book/tooling.md).
+  - name: ziglang/zig@0.15.2
   - import: ../.limen/hermetic.yaml
