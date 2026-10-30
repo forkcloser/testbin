@@ -10,11 +10,11 @@ platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 wi
 lint: do::lint::default
 fix: do::fix::default
 # Each tool built for this host and run on it.
-test: flac-test drflac-test
+test: flac-test drflac-test flake-test
 security: do::security::default
 
 # Build every tool for every platform into $LIMEN_BUILD/dist.
-build: (flac platforms) (drflac platforms)
+build: (flac platforms) (drflac platforms) (flake platforms)
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
 # flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
@@ -86,6 +86,100 @@ drflac-test: flac-test
     just drflac "${platform}"
     drflac/smoke.sh "${LIMEN_BUILD}/drflac/${platform}/bin" "${LIMEN_BUILD}/flac/${platform}/bin"
 
+# Publish CUETools.Flake for the given platforms with the pinned .NET SDK, each
+# archived with upstream's four licence notices into
+# $LIMEN_BUILD/dist/flake-<version>-<platform>.tar.gz.
+flake +targets: (_fetch "cuetools")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(just _dotnet)"
+    version=$(limen pins get cuetools version)
+    src="${LIMEN_BUILD}/src/cuetools-${version}"
+    mkdir -p "${LIMEN_BUILD}/dist"
+    set -- {{ targets }}
+    for platform in "$@"; do
+        out="${LIMEN_BUILD}/flake/${platform}"
+        rm -rf "${out}"
+        flake/build.sh "${src}" "$(just _dotnet-rid "${platform}")" "${out}"
+        x=""
+        case "${platform}" in windows-*) x=".exe" ;; esac
+        name="flake-${version}-${platform}"
+        stage="${LIMEN_BUILD}/stage/${name}"
+        rm -rf "${stage}"
+        mkdir -p "${stage}"
+        cp "${out}/CUETools.Flake${x}" "${stage}/"
+        cp "${src}/License.txt" "${stage}/License.txt"
+        cp "${src}/CUETools.Codecs/License.txt" "${stage}/License.CUETools.Codecs.txt"
+        cp "${src}/CUETools.Codecs.Flake/COPYING" "${stage}/COPYING"
+        cp "${LIMEN_BUILD}/nuget/newtonsoft.json/13.0.3/LICENSE.md" "${stage}/LICENSE.Newtonsoft.Json.md"
+        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
+        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+    done
+
+# Publish CUETools.Flake for this host and round-trip arbitrary PCM through it
+# and flac.
+flake-test: flac-test
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    just flake "${platform}"
+    flake/smoke.sh "${LIMEN_BUILD}/flake/${platform}" "${LIMEN_BUILD}/flac/${platform}/bin"
+
+# Rewrite flake/locks from a publish of this host's platform: after a .NET SDK
+# or a CUETools bump changes what the projects reference.
+flake-lock: (_fetch "cuetools")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(just _dotnet)"
+    version=$(limen pins get cuetools version)
+    FLAKE_LOCKED=false FLAKE_LOCK_UPDATE=true flake/build.sh "${LIMEN_BUILD}/src/cuetools-${version}" \
+        "$(just _dotnet-rid "$(just _host-platform)")" "${LIMEN_BUILD}/flake/lock"
+
+# The pinned .NET SDK for this host, fetched, verified against pins.yaml and
+# unpacked once; prints the environment that puts it on PATH, for `eval`. Its
+# state (the CLI's home, the NuGet packages) stays under $LIMEN_BUILD.
+_dotnet:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pin="dotnet-sdk-$(just _host-platform)"
+    version=$(limen pins get "${pin}" version)
+    url=$(limen pins get "${pin}" url)
+    sum=$(limen pins get "${pin}" sha256)
+    root="${LIMEN_BUILD}/${pin}-${version}"
+    if [ ! -x "${root}/dotnet" ] && [ ! -x "${root}/dotnet.exe" ]; then
+        archive="${LIMEN_BUILD}/src/${url##*/}"
+        mkdir -p "${LIMEN_BUILD}/src"
+        [ -f "${archive}" ] || curl -fsSL --retry 3 -o "${archive}" "${url}"
+        if ! echo "${sum}  ${archive}" | sha256sum -c - > /dev/null; then
+            echo "${archive}: sha256 does not match pins.yaml's ${pin} ${version}" >&2
+            rm -f "${archive}"
+            exit 1
+        fi
+        rm -rf "${root}"
+        mkdir -p "${root}"
+        case "${archive}" in
+            *.zip) unzip -q "${archive}" -d "${root}" ;;
+            *) tar -xzf "${archive}" -C "${root}" ;;
+        esac
+    fi
+    echo "export DOTNET_ROOT='${root}' PATH='${root}:${PATH}'"
+    echo "export DOTNET_CLI_HOME='${LIMEN_BUILD}/dotnet-home' NUGET_PACKAGES='${LIMEN_BUILD}/nuget'"
+    echo "export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1"
+    echo "export DOTNET_MULTILEVEL_LOOKUP=0 MSBUILDDISABLENODEREUSE=1 DOTNET_CLI_USE_MSBUILD_SERVER=0"
+
+# The .NET runtime identifier of a platform.
+_dotnet-rid platform:
+    #!/usr/bin/env bash
+    case "{{ platform }}" in
+        linux-amd64) echo linux-x64 ;;
+        linux-arm64) echo linux-arm64 ;;
+        darwin-amd64) echo osx-x64 ;;
+        darwin-arm64) echo osx-arm64 ;;
+        windows-amd64) echo win-x64 ;;
+        windows-arm64) echo win-arm64 ;;
+        *) echo "unknown platform {{ platform }} (one of {{ platforms }})" >&2; exit 1 ;;
+    esac
+
 # The release notes' source section: each tool's upstream release, as pins.yaml
 # pins it, the corresponding source of the binaries built from it.
 release-notes:
@@ -97,6 +191,7 @@ release-notes:
     echo
     echo "- flac $(limen pins get flac version): $(limen pins get flac url)"
     echo "- dr_flac $(limen pins get drflac version): $(limen pins get drflac url)"
+    echo "- CUETools $(limen pins get cuetools version): $(limen pins get cuetools url)"
 
 # Fetch a pinned source to $LIMEN_BUILD/src/<name>-<version>.<ext>, verify it
 # against pins.yaml on every run (a reused build directory keeps the tarball),

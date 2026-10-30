@@ -10,6 +10,7 @@ other uses, or covered by any compatibility promise.
 |---|---|---|
 | [`flac/`](flac/) | `flac`, `metaflac` | [xiph/flac](https://github.com/xiph/flac) |
 | [`drflac/`](drflac/) | `drflac`, a FLAC decoder on dr_flac | [mackron/dr_libs](https://github.com/mackron/dr_libs) |
+| [`flake/`](flake/) | `CUETools.Flake`, CUETools' FLAC encoder | [gchudov/cuetools.net](https://github.com/gchudov/cuetools.net) |
 
 Each tool's directory holds its build script and anything the build needs beside the upstream
 sources, and states the upstream licence its sources, patches and binaries are under.

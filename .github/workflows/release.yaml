@@ -88,6 +88,7 @@ jobs:
           flac=$(echo unpacked/flac-*-"${PLATFORM}")
           bash flac/smoke.sh "${flac}"
           bash drflac/smoke.sh unpacked/drflac-*-"${PLATFORM}" "${flac}"
+          bash flake/smoke.sh unpacked/flake-*-"${PLATFORM}" "${flac}"
 
   publish:
     # Tag pushes only: a workflow_dispatch run stops after the smoke legs.

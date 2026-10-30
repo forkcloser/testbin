@@ -1,0 +1,13 @@
+<!-- Imported after Microsoft.Common.targets (CustomAfterMicrosoftCommonTargets)
+     into every CUETools project of the build. CUETools' application loads its
+     codecs from a shared plugins directory, so its projects reference each
+     other with Private=False and no assembly is copied next to the command;
+     a standalone CUETools.Flake must carry them, so every project reference
+     is made private again. Upstream's project files stay as they are. -->
+<Project>
+  <ItemGroup>
+    <ProjectReference Update="@(ProjectReference)">
+      <Private>true</Private>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
