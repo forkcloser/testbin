@@ -9,6 +9,8 @@ other uses, or covered by any compatibility promise.
 | Directory | Builds | Upstream |
 |---|---|---|
 | [`flac/`](flac/) | `flac`, `metaflac` | [xiph/flac](https://github.com/xiph/flac) |
+| [`drflac/`](drflac/) | `drflac`, a FLAC decoder on dr_flac | [mackron/dr_libs](https://github.com/mackron/dr_libs) |
+| [`flake/`](flake/) | `CUETools.Flake`, CUETools' FLAC encoder | [gchudov/cuetools.net](https://github.com/gchudov/cuetools.net) |
 
 Each tool's directory holds its build script and anything the build needs beside the upstream
 sources, and states the upstream licence its sources, patches and binaries are under.
@@ -21,7 +23,8 @@ sources, and states the upstream licence its sources, patches and binaries are u
   `.hermetic/hermetic.yaml`, with the target always explicit: linux (static, musl), darwin and
   windows, amd64 and arm64, cross-compiled from any of them. No runner package manager, no
   container.
-- **Third-party source only.** Everything here builds an upstream project's own sources. A tool
+- **Third-party source only.** Everything here builds an upstream project's own sources; a
+  header-only library gets the smallest program around it that exercises it (`drflac`). A tool
   that wraps an operating system's API has no third-party source to build and lives with the
   repository that uses it.
 - **Every binary runs where it ships.** CI builds each platform and runs it on that platform's
@@ -42,6 +45,6 @@ notes link it.
 
 ```sh
 just build              # every tool, every platform, into .build/dist
-just flac darwin-arm64  # one tool, the given platforms
+just flac darwin-arm64  # one tool, the given platforms (also: just drflac …)
 just test               # each tool for this host, then run on it
 ```
