@@ -2,7 +2,7 @@
 # Publish CUETools.Flake for one .NET runtime identifier from an unpacked
 # gchudov/cuetools.net tree, self-contained, as a single file.
 #   build.sh <source tree> <runtime identifier> <output directory>
-# `dotnet` is the pinned SDK (the recipe puts it on PATH with DOTNET_ROOT).
+# The SDK is DOTNET_ROOT's: the pinned one, which the recipe unpacks.
 # The restore is locked against locks/ unless FLAKE_LOCKED=false; with
 # FLAKE_LOCK_UPDATE=true as well it rewrites them (`just flake-lock`).
 # Upstream's projects target end-of-life frameworks and reference each other
@@ -31,7 +31,8 @@ cp "${here}/Directory.Build.props" "${src}/"
 
 # One in-process MSBuild node, no build servers: nothing outlives the build,
 # and the build needs no inter-process pipes.
-(cd "${src}" && dotnet publish CUETools.Flake/CUETools.Flake.csproj \
+dotnet=${DOTNET_ROOT:?the pinned .NET SDK}/dotnet
+(cd "${src}" && "${dotnet}" publish CUETools.Flake/CUETools.Flake.csproj \
   -c Release -f net10.0 -r "${rid}" --self-contained \
   -p:TargetFrameworks=net10.0 \
   -p:PublishSingleFile=true \

@@ -162,7 +162,16 @@ _dotnet:
             *) tar -xzf "${archive}" -C "${root}" ;;
         esac
     fi
-    echo "export DOTNET_ROOT='${root}' PATH='${root}:${PATH}'"
+    have=$(DOTNET_CLI_HOME="${LIMEN_BUILD}/dotnet-home" DOTNET_NOLOGO=1 DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+        DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1 DOTNET_MULTILEVEL_LOOKUP=0 "${root}/dotnet" --version)
+    if [ "${have}" != "${version}" ]; then
+        echo "${root}: dotnet ${have}, not pins.yaml's ${pin} ${version}" >&2
+        exit 1
+    fi
+    # PATH is colon-separated: on windows, the drive's colon would split it.
+    path_root=${root}
+    command -v cygpath > /dev/null 2>&1 && path_root=$(cygpath -u "${root}")
+    echo "export DOTNET_ROOT='${root}' PATH='${path_root}:${PATH}'"
     echo "export DOTNET_CLI_HOME='${LIMEN_BUILD}/dotnet-home' NUGET_PACKAGES='${LIMEN_BUILD}/nuget'"
     echo "export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1"
     echo "export DOTNET_MULTILEVEL_LOOKUP=0 MSBUILDDISABLENODEREUSE=1 DOTNET_CLI_USE_MSBUILD_SERVER=0"
