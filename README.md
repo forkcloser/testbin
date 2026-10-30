@@ -11,6 +11,7 @@ other uses, or covered by any compatibility promise.
 | [`flac/`](flac/) | `flac`, `metaflac` | [xiph/flac](https://github.com/xiph/flac) |
 | [`drflac/`](drflac/) | `drflac`, a FLAC decoder on dr_flac | [mackron/dr_libs](https://github.com/mackron/dr_libs) |
 | [`flake/`](flake/) | `CUETools.Flake`, CUETools' FLAC encoder | [gchudov/cuetools.net](https://github.com/gchudov/cuetools.net) |
+| [`erofs/`](erofs/) | `mkfs.erofs` | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) |
 
 Each tool's directory holds its build script and anything the build needs beside the upstream
 sources, and states the upstream licence its sources, patches and binaries are under.
@@ -23,10 +24,11 @@ sources, and states the upstream licence its sources, patches and binaries are u
   `.hermetic/hermetic.yaml`, with the target always explicit: linux (static, musl), darwin and
   windows, amd64 and arm64, cross-compiled from any of them. No runner package manager, no
   container.
-- **Third-party source only.** Everything here builds an upstream project's own sources; a
-  header-only library gets the smallest program around it that exercises it (`drflac`). A tool
-  that wraps an operating system's API has no third-party source to build and lives with the
-  repository that uses it.
+- **Third-party source only.** Everything here builds an upstream project's own sources,
+  patched only where a platform needs it (`erofs/patches`, for windows); a header-only library
+  gets the smallest program around it that exercises it (`drflac`). A tool that wraps an
+  operating system's API has no third-party source to build and lives with the repository that
+  uses it.
 - **Every binary runs where it ships.** CI builds each platform and runs it on that platform's
   runner (`just test`); the release workflow runs the published archives themselves on all six
   platforms before attaching them.
@@ -39,12 +41,12 @@ platform, `checksums.txt`, and a GitHub build provenance attestation over every 
 any other pinned tool. The corresponding source of each tool's binaries is upstream's release,
 pinned in `pins.yaml` (url and sha256), e.g. flac's
 `https://github.com/xiph/flac/releases/download/<version>/flac-<version>.tar.xz`; each release's
-notes link it.
+notes link it, and the patches a tool's directory applies, at the release's tag.
 
 ## Working on it
 
 ```sh
 just build              # every tool, every platform, into .build/dist
-just flac darwin-arm64  # one tool, the given platforms (also: just drflac …)
+just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs …)
 just test               # each tool for this host, then run on it
 ```
