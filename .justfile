@@ -10,11 +10,11 @@ platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 wi
 lint: do::lint::default
 fix: do::fix::default
 # Each tool built for this host and run on it.
-test: flac-test drflac-test flake-test
+test: flac-test drflac-test flake-test erofs-test
 security: do::security::default
 
 # Build every tool for every platform into $LIMEN_BUILD/dist.
-build: (flac platforms) (drflac platforms) (flake platforms)
+build: (flac platforms) (drflac platforms) (flake platforms) (erofs platforms)
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
 # flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
@@ -125,6 +125,45 @@ flake-test: flac-test
     just flake "${platform}"
     flake/smoke.sh "${LIMEN_BUILD}/flake/${platform}" "${LIMEN_BUILD}/flac/${platform}/bin"
 
+# Build mkfs.erofs (erofs-utils, patched, linking lz4) for the given platforms,
+# archived with erofs-utils' and lz4's licence notices into
+# $LIMEN_BUILD/dist/erofs-<version>-<platform>.tar.gz.
+erofs +targets: (_fetch "erofs-utils") (_fetch "lz4")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export ZIG_GLOBAL_CACHE_DIR="${LIMEN_BUILD}/zig/global" ZIG_LOCAL_CACHE_DIR="${LIMEN_BUILD}/zig/local"
+    version=$(limen pins get erofs-utils version)
+    src="${LIMEN_BUILD}/src/erofs-utils-${version}"
+    lz4="${LIMEN_BUILD}/src/lz4-$(limen pins get lz4 version)"
+    mkdir -p "${LIMEN_BUILD}/dist"
+    set -- {{ targets }}
+    for platform in "$@"; do
+        out="${LIMEN_BUILD}/erofs/${platform}"
+        rm -rf "${out}"
+        erofs/build.sh "${src}" "${lz4}" "${version}" "$(just _zig-target "${platform}")" "${out}"
+        x=""
+        case "${platform}" in windows-*) x=".exe" ;; esac
+        name="erofs-${version}-${platform}"
+        stage="${LIMEN_BUILD}/stage/${name}"
+        rm -rf "${stage}"
+        mkdir -p "${stage}/LICENSES"
+        cp "${out}/bin/mkfs.erofs${x}" "${stage}/"
+        cp "${src}/COPYING" "${stage}/"
+        cp "${src}/LICENSES/GPL-2.0" "${src}/LICENSES/MIT" "${stage}/LICENSES/"
+        cp "${lz4}/lib/LICENSE" "${stage}/LICENSE.lz4"
+        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
+        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+    done
+
+# Build mkfs.erofs (and fsck.erofs where it builds) for this host and run the
+# image checks on it.
+erofs-test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    just erofs "${platform}"
+    erofs/smoke.sh "${LIMEN_BUILD}/erofs/${platform}/bin"
+
 # Rewrite flake/locks from a publish of this host's platform: after a .NET SDK
 # or a CUETools bump changes what the projects reference.
 flake-lock: (_fetch "cuetools")
@@ -201,6 +240,10 @@ release-notes:
     echo "- flac $(limen pins get flac version): $(limen pins get flac url)"
     echo "- dr_flac $(limen pins get drflac version): $(limen pins get drflac url)"
     echo "- CUETools $(limen pins get cuetools version): $(limen pins get cuetools url)"
+    echo "- erofs-utils $(limen pins get erofs-utils version): $(limen pins get erofs-utils url),"
+    echo "  patched with this repository's erofs/patches and built with its erofs/mingw-compat"
+    echo "  headers (windows) at this release's tag"
+    echo "- lz4 $(limen pins get lz4 version): $(limen pins get lz4 url)"
 
 # Fetch a pinned source to $LIMEN_BUILD/src/<name>-<version>.<ext>, verify it
 # against pins.yaml on every run (a reused build directory keeps the tarball),

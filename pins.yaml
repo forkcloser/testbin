@@ -34,6 +34,27 @@ pins:
     digest:
       version: 2.2.6
       sha256: e263bac9f8d6cab35997cd6f04210cad2ea748e55bebc00e69a35b84a2ddec5f
+  # erofs-utils' release tag; mkfs.erofs is built from the tag tarball,
+  # patched with erofs/patches.
+  - name: erofs-utils
+    renovate: github-tags erofs/erofs-utils
+    extract-version: ^v(?<version>[0-9]+\.[0-9]+\.[0-9]+)$
+    version: 1.9.4
+    url: https://github.com/erofs/erofs-utils/archive/refs/tags/v${version}.tar.gz
+    verify: download
+    digest:
+      version: 1.9.4
+      sha256: 7d135aa2550326a5acf20f53c518aea5a8900015ce50700044e40f818c31dd80
+  # lz4's release tag: the compressor library mkfs.erofs links.
+  - name: lz4
+    renovate: github-tags lz4/lz4
+    extract-version: ^v(?<version>[0-9]+\.[0-9]+\.[0-9]+)$
+    version: 1.10.0
+    url: https://github.com/lz4/lz4/archive/refs/tags/v${version}.tar.gz
+    verify: download
+    digest:
+      version: 1.10.0
+      sha256: 537512904744b35e232912055ccf8ec66d768639ff3abe5788d90d792ec5f48b
   # The .NET SDK that builds CUETools, one archive per platform a build or a
   # test runs on (the toolchain is a pinned archive, not a registry tool: the
   # registries the policy authorizes carry no .NET SDK).
