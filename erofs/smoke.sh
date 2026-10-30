@@ -27,7 +27,9 @@ sha256() {
 }
 
 work=$(mktemp -d "${TMPDIR:-/tmp}/erofs-smoke.XXXXXX")
-trap 'rm -rf "${work}"' EXIT
+# Leave it before removing it: windows refuses to remove a process's working
+# directory.
+trap 'cd / && rm -rf "${work}"' EXIT
 # Relative paths from here on: a native windows binary is handed no POSIX path
 # it would have to translate.
 cd "${work}"
