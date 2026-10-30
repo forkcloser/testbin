@@ -64,7 +64,8 @@ for c in "${cases[@]}"; do
   have=$(sha256 "${name}.img")
   if [ "${have}" != "${want}" ]; then
     echo "${name} (${opts}): sha256 ${have}, want ${want}" >&2
-    echo "DIAG ${name} size $(wc -c < "${name}.img")" >&2
+    echo "DIAG ${name} size $(wc -c < "${name}.img") SDE=${SOURCE_DATE_EPOCH:-unset}" >&2
+    od -A d -t x1 -v -j 1024 -N 256 "${name}.img" | sed 's/^/DIAGSB /' >&2
     size=$(wc -c < "${name}.img")
     i=0
     while [ $((i * 512)) -lt "${size}" ]; do
