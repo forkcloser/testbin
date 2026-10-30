@@ -36,6 +36,9 @@ def main(path):
             info.size = len(data)
             tar.addfile(info, io.BytesIO(data) if data else None)
 
+        # The root directory's own entry: without it, mkfs.erofs gives the
+        # root the uid and gid of whoever runs it.
+        add(member(".", tarfile.DIRTYPE, 0o755))
         add(member("dir", tarfile.DIRTYPE, 0o755))
         add(member("dir/sub", tarfile.DIRTYPE, 0o750, uid=1000, gid=1000))
         add(member("dir/small.txt"), b"a file small enough to inline\n")

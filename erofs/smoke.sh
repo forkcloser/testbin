@@ -32,6 +32,8 @@ trap 'rm -rf "${work}"' EXIT
 # it would have to translate.
 cd "${work}"
 cp "${fixture}" fixture.tar
+# SOURCE_DATE_EPOCH, when set, overrides -T.
+unset SOURCE_DATE_EPOCH
 # mkfs.erofs makes its scratch files in $TMPDIR (/tmp without it): a native
 # windows binary needs a windows path there.
 if command -v cygpath > /dev/null 2>&1; then
@@ -45,11 +47,11 @@ common=(-T0 -U 6f8d1b52-6c5e-4b0a-9d1c-2b6f0d3e4a71 --quiet --tar=f)
 # name | options | sha256 of the image | whether fsck.erofs can read it back
 # (the deflate decompressor needs zlib, which this build leaves out).
 cases=(
-  "plain|-b4096|8e2987618abcdaef3602b424c1219783f7058d3365699fb514d6e7ffe331364e|yes"
-  "noinline|-b4096 -Enoinline_data|0493a71fae573955c0cb496d8490ce81f92ab4c27651b899ea91e80cd50958e4|yes"
-  "lz4|-b4096 -zlz4|29d58f5f2237e66e2d1ec35964e138e1e6a2c3cd3d45b363d854f6af4bedbcd7|yes"
-  "lz4hc|-b16384 -zlz4hc,12 -Ededupe|1b28c8f3e90ba2b4b3b9723aa368a417a415fa28dc3524b463368d10a2193633|yes"
-  "deflate|-b512 -zdeflate|f0456c78f78ac023360a541a67ffb381c84de698dddef2e6dfbd2813b8714585|no"
+  "plain|-b4096|b8cd2965f6d9b87b4f851af8b8e5e576cf5fbb2967f1eb2fb02159adf6d22a0d|yes"
+  "noinline|-b4096 -Enoinline_data|0222f0a597cbbf7c3cf6e80f2532c6ad011dc60882639caaaf14af39d6768ba6|yes"
+  "lz4|-b4096 -zlz4|e28e3ad0f5ed6c79c49569136a267b32c3d019c03cf028c1068734c6ed150c83|yes"
+  "lz4hc|-b16384 -zlz4hc,12 -Ededupe|215d19f1bf35a106c9934c729fcd0f6096249f7fe1cbcedfa37ca57a99ea5674|yes"
+  "deflate|-b512 -zdeflate|499572aad78d062d54a8b25b0b6926c6498e98bdc4fdda9e0f43ce16bdeb108c|no"
 )
 
 if [ -x "${fsck}" ]; then
@@ -64,20 +66,7 @@ for c in "${cases[@]}"; do
   have=$(sha256 "${name}.img")
   if [ "${have}" != "${want}" ]; then
     echo "${name} (${opts}): sha256 ${have}, want ${want}" >&2
-    echo "DIAG ${name} size $(wc -c < "${name}.img") SDE=${SOURCE_DATE_EPOCH:-unset}" >&2
-    od -A d -t x1 -v -j 1024 -N 256 "${name}.img" | sed 's/^/DIAGSB /' >&2
-    size=$(wc -c < "${name}.img")
-    i=0
-    while [ $((i * 512)) -lt "${size}" ]; do
-      echo "DIAG ${name} ${i} $(dd if="${name}.img" bs=512 skip="${i}" count=1 2> /dev/null | od -A n -t x1 -v | tr -d ' \n' | cksum | cut -d' ' -f1)" >&2
-      i=$((i + 1))
-    done
-    if [ -x "${fsck}" ] && [ "${readable}" = yes ]; then
-      rm -rf out
-      "${fsck}" --extract=out --no-preserve "${name}.img" >&2 && diff -r ref out >&2 && echo "DIAG ${name} extract identical" >&2
-    fi
-    failed=1
-    continue
+    exit 1
   fi
   if [ -x "${fsck}" ] && [ "${readable}" = yes ]; then
     rm -rf out
@@ -87,8 +76,6 @@ for c in "${cases[@]}"; do
   fi
   echo "mkfs.erofs ${opts}: the expected image$([ -x "${fsck}" ] && [ "${readable}" = yes ] && echo ", extracted identical to the tar")"
 done
-
-[ -z "${failed:-}" ] || exit 1
 
 # The tar from a pipe, as from a file: the stream path the windows patches
 # change.

@@ -27,9 +27,11 @@ of 16 KiB on every platform. Multi-threaded compression is on except on windows.
   the pinned zig's macOS headers carry no `sys/xattr.h`.
 - `smoke.sh` makes images from `testdata/fixture.tar` with five option sets and requires each
   image's sha256 to match the one recorded there, which is the same on every platform: a tar
-  fixes every name, mode, owner and time, and `-T0` and `-U` fix the rest. Where `fsck.erofs`
-  sits beside it, each image readable without zlib is also extracted and compared with the
-  tar's files. A tar read from a pipe must give the same image as the file.
+  fixes every name, mode, owner and time, the root directory's included (without its entry,
+  mkfs.erofs gives the root the uid and gid of whoever runs it), and `-T0` and `-U` fix the rest
+  (`SOURCE_DATE_EPOCH`, which overrides `-T`, is cleared). Where `fsck.erofs` sits beside it,
+  each image readable without zlib is also extracted and compared with the tar's files. A tar
+  read from a pipe must give the same image as the file.
 - `testdata/fixture.py` writes `testdata/fixture.tar` byte for byte. CI never runs it; the tar
   is committed.
 
