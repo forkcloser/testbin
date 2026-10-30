@@ -32,6 +32,12 @@ trap 'rm -rf "${work}"' EXIT
 # it would have to translate.
 cd "${work}"
 cp "${fixture}" fixture.tar
+# mkfs.erofs makes its scratch files in $TMPDIR (/tmp without it): a native
+# windows binary needs a windows path there.
+if command -v cygpath > /dev/null 2>&1; then
+  TMPDIR=$(cygpath -m "${work}")
+  export TMPDIR
+fi
 
 "${mkfs}" -V | head -n 1
 
@@ -58,7 +64,19 @@ for c in "${cases[@]}"; do
   have=$(sha256 "${name}.img")
   if [ "${have}" != "${want}" ]; then
     echo "${name} (${opts}): sha256 ${have}, want ${want}" >&2
-    exit 1
+    echo "DIAG ${name} size $(wc -c < "${name}.img")" >&2
+    size=$(wc -c < "${name}.img")
+    i=0
+    while [ $((i * 512)) -lt "${size}" ]; do
+      echo "DIAG ${name} ${i} $(dd if="${name}.img" bs=512 skip="${i}" count=1 2> /dev/null | od -A n -t x1 -v | tr -d ' \n' | cksum | cut -d' ' -f1)" >&2
+      i=$((i + 1))
+    done
+    if [ -x "${fsck}" ] && [ "${readable}" = yes ]; then
+      rm -rf out
+      "${fsck}" --extract=out --no-preserve "${name}.img" >&2 && diff -r ref out >&2 && echo "DIAG ${name} extract identical" >&2
+    fi
+    failed=1
+    continue
   fi
   if [ -x "${fsck}" ] && [ "${readable}" = yes ]; then
     rm -rf out
@@ -68,6 +86,8 @@ for c in "${cases[@]}"; do
   fi
   echo "mkfs.erofs ${opts}: the expected image$([ -x "${fsck}" ] && [ "${readable}" = yes ] && echo ", extracted identical to the tar")"
 done
+
+[ -z "${failed:-}" ] || exit 1
 
 # The tar from a pipe, as from a file: the stream path the windows patches
 # change.
