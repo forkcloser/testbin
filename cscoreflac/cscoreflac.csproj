@@ -1,0 +1,52 @@
+<!-- cscoreflac: Program.cs, this repository's own, around CSCore's FLAC decoder,
+     compiled from the pinned CSCore tree (CscoreSource) without the rest of the
+     library: the decoder's folder and the few CSCore types it reaches, and no
+     upstream file is edited. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>cscoreflac</AssemblyName>
+    <RootNamespace>Testbin.CscoreFlac</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <!-- The pinned tree sits inside this repository's checkout: SourceLink
+         would stamp upstream's code with this repository's commit. -->
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+    <EnableSourceLink>false</EnableSourceLink>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <!-- The one NuGet package a publish restores (Microsoft.NET.ILLink.Tasks)
+         is pinned by its sha512 in packages.lock.json, restored in locked mode
+         unless CscoreLocked=false (`just cscoreflac-lock`); the six runtime
+         identifiers are restored together, so one lock serves every platform. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(CscoreLocked)' == 'true'">true</RestoreLockedMode>
+    <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64;win-x64;win-arm64</RuntimeIdentifiers>
+    <!-- Upstream's files, compiled as they are: their obsolete-API and CLS
+         warnings are upstream's (WebClient, Exception.GetObjectData). -->
+    <NoWarn>$(NoWarn);SYSLIB0014;SYSLIB0051;CS0672;CS3021</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Compat.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/Codecs/FLAC/**/*.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/Utils/BitReader.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/Utils/FlacBitReader.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/Utils/CRC8.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/Utils/CRC16.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/Utils/CRCBase.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/AudioEncoding.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/ChannelMask.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/WaveFormatExtensible.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/AudioSubTypes.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/AudioSubTypes.Utils.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/WaveFormat.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/IWaveSource.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/IAudioSource.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/IReadableAudioSource.cs" />
+    <Compile Include="$(CscoreSource)/CSCore/Tags/ID3/**/*.cs" />
+  </ItemGroup>
+</Project>

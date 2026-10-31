@@ -36,6 +36,17 @@ pins:
     digest:
       version: e491d2ec76709975f09d1820367a92a1772ccfb1
       sha256: 305f7a33ffceb9101c0f3a5420597da5bd60e26b027278efcffbf7a278629227
+  # microFLAC's release tag (ESPHome's FLAC decoder); the archive is GitHub's
+  # tarball of the tag.
+  - name: microflac
+    renovate: github-tags esphome-libs/micro-flac
+    extract-version: ^v(?<version>.*)$
+    version: 0.3.0
+    url: https://github.com/esphome-libs/micro-flac/archive/refs/tags/v${version}.tar.gz
+    verify: download
+    digest:
+      version: 0.3.0
+      sha256: ac2c7a8ef05485b36f50468b056ec93ffb2503632b18b64a8966d0feb1c13337
   # CUETools' release tag; its Flake encoder is built from the tag tarball.
   - name: cuetools
     renovate: github-tags gchudov/cuetools.net
@@ -67,6 +78,17 @@ pins:
     digest:
       version: 1.10.0
       sha256: 537512904744b35e232912055ccf8ec66d768639ff3abe5788d90d792ec5f48b
+  # CSCore's last release tag; its FLAC decoder is compiled from the tag
+  # tarball into cscoreflac, the rest of the library left out.
+  - name: cscore
+    renovate: github-tags filoe/cscore
+    extract-version: ^v?(?<version>.*)$
+    version: 1.2.1.2
+    url: https://github.com/filoe/cscore/archive/refs/tags/${version}.tar.gz
+    verify: download
+    digest:
+      version: 1.2.1.2
+      sha256: a37a882114964e28ef91362c130565d6a5367172eb1283164ae620e939a14f62
   # The .NET SDK that builds CUETools, one archive per platform a build or a
   # test runs on (the toolchain is a pinned archive, not a registry tool: the
   # registries the policy authorizes carry no .NET SDK).
