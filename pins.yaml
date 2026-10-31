@@ -55,6 +55,17 @@ pins:
     digest:
       version: 1.10.0
       sha256: 537512904744b35e232912055ccf8ec66d768639ff3abe5788d90d792ec5f48b
+  # CSCore's last release tag; its FLAC decoder is compiled from the tag
+  # tarball into cscoreflac, the rest of the library left out.
+  - name: cscore
+    renovate: github-tags filoe/cscore
+    extract-version: ^v?(?<version>.*)$
+    version: 1.2.1.2
+    url: https://github.com/filoe/cscore/archive/refs/tags/${version}.tar.gz
+    verify: download
+    digest:
+      version: 1.2.1.2
+      sha256: a37a882114964e28ef91362c130565d6a5367172eb1283164ae620e939a14f62
   # The .NET SDK that builds CUETools, one archive per platform a build or a
   # test runs on (the toolchain is a pinned archive, not a registry tool: the
   # registries the policy authorizes carry no .NET SDK).

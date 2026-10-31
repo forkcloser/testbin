@@ -10,11 +10,11 @@ platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 wi
 lint: do::lint::default do::lint::rust::default
 fix: do::fix::default do::fix::rust::default
 # Each tool built for this host and run on it.
-test: flac-test drflac-test flake-test erofs-test claxon-test symphonia-test
+test: flac-test drflac-test cscoreflac-test flake-test erofs-test claxon-test symphonia-test
 security: do::security::default
 
 # Build every tool for every platform into $LIMEN_BUILD/dist.
-build: (flac platforms) (drflac platforms) (flake platforms) (erofs platforms) (claxon platforms) (symphonia platforms)
+build: (flac platforms) (drflac platforms) (flake platforms) (cscoreflac platforms) (erofs platforms) (claxon platforms) (symphonia platforms)
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
 # flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
@@ -250,6 +250,54 @@ symphonia-test: flac-test
     just symphonia "${platform}"
     symphonia/smoke.sh "target/$(just _rust-target "${platform}")/release" "${LIMEN_BUILD}/flac/${platform}/bin"
 
+# Publish cscoreflac (a FLAC decoder on CSCore's) for the given platforms with
+# the pinned .NET SDK, each archived with CSCore's licence and this
+# repository's (Program.cs is ours) into
+# $LIMEN_BUILD/dist/cscoreflac-<version>-<platform>.tar.gz.
+cscoreflac +targets: (_fetch "cscore")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(just _dotnet)"
+    version=$(limen pins get cscore version)
+    src="${LIMEN_BUILD}/src/cscore-${version}"
+    mkdir -p "${LIMEN_BUILD}/dist"
+    set -- {{ targets }}
+    for platform in "$@"; do
+        out="${LIMEN_BUILD}/cscoreflac/${platform}"
+        rm -rf "${out}"
+        cscoreflac/build.sh "${src}" "$(just _dotnet-rid "${platform}")" "${out}"
+        x=""
+        case "${platform}" in windows-*) x=".exe" ;; esac
+        name="cscoreflac-${version}-${platform}"
+        stage="${LIMEN_BUILD}/stage/${name}"
+        rm -rf "${stage}"
+        mkdir -p "${stage}"
+        cp "${out}/cscoreflac${x}" "${stage}/"
+        cp "${src}/license.md" "${stage}/LICENSE.cscore.md"
+        cp LICENSE "${stage}/LICENSE"
+        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
+        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+    done
+
+# Publish cscoreflac for this host and decode flac's encodings of arbitrary PCM
+# with it.
+cscoreflac-test: flac-test
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    just cscoreflac "${platform}"
+    cscoreflac/smoke.sh "${LIMEN_BUILD}/cscoreflac/${platform}" "${LIMEN_BUILD}/flac/${platform}/bin"
+
+# Rewrite cscoreflac/packages.lock.json from a publish of this host's platform:
+# after a .NET SDK or a CSCore bump changes what the project references.
+cscoreflac-lock: (_fetch "cscore")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(just _dotnet)"
+    version=$(limen pins get cscore version)
+    CSCORE_LOCKED=false CSCORE_LOCK_UPDATE=true cscoreflac/build.sh "${LIMEN_BUILD}/src/cscore-${version}" \
+        "$(just _dotnet-rid "$(just _host-platform)")" "${LIMEN_BUILD}/cscoreflac/lock"
+
 # Rewrite flake/locks from a publish of this host's platform: after a .NET SDK
 # or a CUETools bump changes what the projects reference.
 flake-lock: (_fetch "cuetools")
@@ -326,6 +374,7 @@ release-notes:
     echo "- flac $(limen pins get flac version): $(limen pins get flac url)"
     echo "- dr_flac $(limen pins get drflac version): $(limen pins get drflac url)"
     echo "- CUETools $(limen pins get cuetools version): $(limen pins get cuetools url)"
+    echo "- CSCore $(limen pins get cscore version): $(limen pins get cscore url)"
     echo "- erofs-utils $(limen pins get erofs-utils version): $(limen pins get erofs-utils url),"
     echo "  patched with this repository's erofs/patches and built with its erofs/mingw-compat"
     echo "  headers (windows) at this release's tag"

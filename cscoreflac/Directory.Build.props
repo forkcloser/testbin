@@ -1,0 +1,8 @@
+<!-- Imported before the SDK, so the intermediate directories land under
+     $LIMEN_BUILD rather than beside the project in the checkout. -->
+<Project>
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$(LIMEN_BUILD)/cscoreflac/obj/</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(LIMEN_BUILD)/cscoreflac/bin/</BaseOutputPath>
+  </PropertyGroup>
+</Project>

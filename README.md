@@ -11,6 +11,7 @@ other uses, or covered by any compatibility promise.
 | [`flac/`](flac/) | `flac`, `metaflac` | [xiph/flac](https://github.com/xiph/flac) |
 | [`drflac/`](drflac/) | `drflac`, a FLAC decoder on dr_flac | [mackron/dr_libs](https://github.com/mackron/dr_libs) |
 | [`flake/`](flake/) | `CUETools.Flake`, CUETools' FLAC encoder | [gchudov/cuetools.net](https://github.com/gchudov/cuetools.net) |
+| [`cscoreflac/`](cscoreflac/) | `cscoreflac`, a FLAC decoder on CSCore's | [filoe/cscore](https://github.com/filoe/cscore) |
 | [`erofs/`](erofs/) | `mkfs.erofs` | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) |
 | [`claxon/`](claxon/) | `claxon`, a FLAC decoder on Claxon | [ruuda/claxon](https://github.com/ruuda/claxon) |
 | [`symphonia/`](symphonia/) | `symphonia`, a FLAC decoder on Symphonia | [pdeljanov/Symphonia](https://github.com/pdeljanov/Symphonia) |
