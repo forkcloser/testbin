@@ -2,7 +2,7 @@
 # this repository's around an upstream crate, pinned by Cargo.lock.
 [workspace]
 resolver = "3"
-members = ["claxon"]
+members = ["claxon", "symphonia"]
 
 [profile.release]
 strip = true

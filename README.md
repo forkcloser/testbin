@@ -13,6 +13,7 @@ other uses, or covered by any compatibility promise.
 | [`flake/`](flake/) | `CUETools.Flake`, CUETools' FLAC encoder | [gchudov/cuetools.net](https://github.com/gchudov/cuetools.net) |
 | [`erofs/`](erofs/) | `mkfs.erofs` | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) |
 | [`claxon/`](claxon/) | `claxon`, a FLAC decoder on Claxon | [ruuda/claxon](https://github.com/ruuda/claxon) |
+| [`symphonia/`](symphonia/) | `symphonia`, a FLAC decoder on Symphonia | [pdeljanov/Symphonia](https://github.com/pdeljanov/Symphonia) |
 
 Each tool's directory holds its build script and anything the build needs beside the upstream
 sources, and states the upstream licence its sources, patches and binaries are under.
@@ -50,6 +51,6 @@ notes link it, and the patches a tool's directory applies, at the release's tag.
 
 ```sh
 just build              # every tool, every platform, into .build/dist
-just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs, claxon …)
+just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs, claxon, symphonia …)
 just test               # each tool for this host, then run on it
 ```

@@ -10,11 +10,11 @@ platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 wi
 lint: do::lint::default do::lint::rust::default
 fix: do::fix::default do::fix::rust::default
 # Each tool built for this host and run on it.
-test: flac-test drflac-test flake-test erofs-test claxon-test
+test: flac-test drflac-test flake-test erofs-test claxon-test symphonia-test
 security: do::security::default
 
 # Build every tool for every platform into $LIMEN_BUILD/dist.
-build: (flac platforms) (drflac platforms) (flake platforms) (erofs platforms) (claxon platforms)
+build: (flac platforms) (drflac platforms) (flake platforms) (erofs platforms) (claxon platforms) (symphonia platforms)
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
 # flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
@@ -202,6 +202,54 @@ claxon-test: flac-test
     just claxon "${platform}"
     claxon/smoke.sh "target/$(just _rust-target "${platform}")/release" "${LIMEN_BUILD}/flac/${platform}/bin"
 
+# Build symphonia (a FLAC decoder on the Symphonia crates) for the given
+# platforms through limen's Rust lane, archived with the licence files of every
+# crate it links and this repository's (src/main.rs is ours) into
+# $LIMEN_BUILD/dist/symphonia-<crate version>-<platform>.tar.gz.
+symphonia +targets:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    set -- {{ targets }}
+    triples=()
+    for platform in "$@"; do
+        triples+=("$(just _rust-target "${platform}")")
+    done
+    just do build rust targets "${triples[@]}"
+    version=$(just _crate-version symphonia)
+    mkdir -p "${LIMEN_BUILD}/dist"
+    for platform in "$@"; do
+        x=""
+        case "${platform}" in windows-*) x=".exe" ;; esac
+        name="symphonia-${version}-${platform}"
+        stage="${LIMEN_BUILD}/stage/${name}"
+        rm -rf "${stage}"
+        mkdir -p "${stage}/licences"
+        cp "target/$(just _rust-target "${platform}")/release/symphonia${x}" "${stage}/"
+        cp LICENSE "${stage}/LICENSE"
+        for crate in $(just _crate-closure testbin-symphonia); do
+            dir=$(echo "${LIMEN_BUILD}"/cargo/registry/src/*/"${crate}")
+            mkdir -p "${stage}/licences/${crate}"
+            found=""
+            for f in "${dir}"/LICENSE* "${dir}"/LICENCE* "${dir}"/license* "${dir}"/COPYING*; do
+                [ -f "${f}" ] || continue
+                cp "${f}" "${stage}/licences/${crate}/"
+                found=1
+            done
+            [ -n "${found}" ] || { echo "${crate}: no licence file in ${dir}" >&2; exit 1; }
+        done
+        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
+        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+    done
+
+# Build symphonia for this host and decode flac's encodings of arbitrary PCM
+# with it.
+symphonia-test: flac-test
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    just symphonia "${platform}"
+    symphonia/smoke.sh "target/$(just _rust-target "${platform}")/release" "${LIMEN_BUILD}/flac/${platform}/bin"
+
 # Rewrite flake/locks from a publish of this host's platform: after a .NET SDK
 # or a CUETools bump changes what the projects reference.
 flake-lock: (_fetch "cuetools")
@@ -283,6 +331,8 @@ release-notes:
     echo "  headers (windows) at this release's tag"
     echo "- lz4 $(limen pins get lz4 version): $(limen pins get lz4 url)"
     echo "- Claxon $(just _crate-version claxon): https://static.crates.io/crates/claxon/claxon-$(just _crate-version claxon).crate"
+    echo "- Symphonia $(just _crate-version symphonia) and the crates it links, each from crates.io at the version and"
+    echo "  checksum Cargo.lock records: $(just _crate-closure testbin-symphonia | tr '\n' ' ')"
 
 # Fetch a pinned source to $LIMEN_BUILD/src/<name>-<version>.<ext>, verify it
 # against pins.yaml on every run (a reused build directory keeps the tarball),
@@ -331,6 +381,30 @@ _crate-version crate:
     #!/usr/bin/env bash
     set -euo pipefail
     awk -v crate='{{ crate }}' '$0 == "name = \"" crate "\"" { getline; gsub(/version = |"/, ""); print; exit }' Cargo.lock
+
+# Every registry crate a workspace member links, as <name>-<version>, from
+# Cargo.lock: its dependencies, theirs, and so on. Build-time dependencies are
+# among them only if the lock lists them as normal ones, which it does not
+# distinguish, so the closure can be wider than the binary, never narrower.
+_crate-closure member:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    awk -v root='{{ member }}' '
+        /^\[\[package\]\]/ { name = ""; indeps = 0; next }
+        /^name = / { name = $3; gsub(/"/, "", name); next }
+        /^version = / && name != "" { gsub(/"/, "", $3); version[name] = $3; next }
+        /^source = "registry/ { registry[name] = 1; next }
+        /^dependencies = \[/ { indeps = 1; next }
+        indeps && /^\]/ { indeps = 0; next }
+        indeps { dep = $1; gsub(/[",]/, "", dep); deps[name] = deps[name] " " dep; next }
+        END {
+            queue[1] = root; n = 1; seen[root] = 1
+            for (i = 1; i <= n; i++) {
+                k = split(deps[queue[i]], d, " ")
+                for (j = 1; j <= k; j++) if (!(d[j] in seen)) { seen[d[j]] = 1; queue[++n] = d[j] }
+            }
+            for (c in seen) if (c in registry) print c "-" version[c]
+        }' Cargo.lock | sort
 
 # The zig target of a platform: musl on linux (static), the GNU ABI on windows.
 _zig-target platform:
