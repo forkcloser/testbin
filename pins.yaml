@@ -22,8 +22,8 @@ pins:
     url: https://github.com/mackron/dr_libs/archive/refs/tags/flac-${version}.tar.gz
     verify: download
     digest:
-      version: 0.13.3
-      sha256: 2103bb689889f22c8ee0f18dd7fe7cc7ff3addbbdc5e5d43595474afc14e479d
+      version: 0.13.4
+      sha256: bb1ba8d206d8bf2c2fb20d93f4ca4c592d4cbf4621fd7a7711529699c3298d14
   # CUETools' release tag; its Flake encoder is built from the tag tarball.
   - name: cuetools
     renovate: github-tags gchudov/cuetools.net
