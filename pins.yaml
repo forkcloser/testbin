@@ -18,7 +18,7 @@ pins:
   - name: drflac
     renovate: github-tags mackron/dr_libs
     extract-version: ^flac-(?<version>.*)$
-    version: 0.13.3
+    version: 0.13.4
     url: https://github.com/mackron/dr_libs/archive/refs/tags/flac-${version}.tar.gz
     verify: download
     digest:
