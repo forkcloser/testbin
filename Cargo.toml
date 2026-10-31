@@ -1,0 +1,8 @@
+# The Rust tools testbin builds, one member per tool: each a small program of
+# this repository's around an upstream crate, pinned by Cargo.lock.
+[workspace]
+resolver = "3"
+members = ["claxon"]
+
+[profile.release]
+strip = true

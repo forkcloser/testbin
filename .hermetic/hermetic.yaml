@@ -33,4 +33,9 @@ packages:
   # this limen pins: a limen bump changes that file, never this list
   # (book/tooling.md).
   - name: ziglang/zig@0.15.2
+  # The Rust tools' toolchain (limen's book/rust.md): rustup installs what
+  # rust-toolchain.toml pins; cargo-zigbuild links each target through zig.
+  - name: rust-lang/rustup@1.29.2
+    registry: local
+  - name: rust-cross/cargo-zigbuild@v0.24.0
   - import: ../.limen/hermetic.yaml

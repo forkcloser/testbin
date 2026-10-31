@@ -1,0 +1,14 @@
+[package]
+name = "testbin-claxon"
+description = "A FLAC decoder on Claxon"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[[bin]]
+name = "claxon"
+path = "src/main.rs"
+
+[dependencies]
+claxon = "=0.4.3"

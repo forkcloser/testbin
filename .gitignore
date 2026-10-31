@@ -24,7 +24,7 @@ Desktop.ini
 #  Rust
 # =========================
 # Cargo build output
-# /target/
+/target/
 
 # Cargo.lock: COMMIT for binaries/apps, IGNORE for libraries.
 # Uncomment the next line ONLY if this is a published library crate:

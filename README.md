@@ -12,6 +12,7 @@ other uses, or covered by any compatibility promise.
 | [`drflac/`](drflac/) | `drflac`, a FLAC decoder on dr_flac | [mackron/dr_libs](https://github.com/mackron/dr_libs) |
 | [`flake/`](flake/) | `CUETools.Flake`, CUETools' FLAC encoder | [gchudov/cuetools.net](https://github.com/gchudov/cuetools.net) |
 | [`erofs/`](erofs/) | `mkfs.erofs` | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) |
+| [`claxon/`](claxon/) | `claxon`, a FLAC decoder on Claxon | [ruuda/claxon](https://github.com/ruuda/claxon) |
 
 Each tool's directory holds its build script and anything the build needs beside the upstream
 sources, and states the upstream licence its sources, patches and binaries are under.
@@ -19,11 +20,13 @@ sources, and states the upstream licence its sources, patches and binaries are u
 ## How the builds work
 
 - **Sources are pinned, never vendored.** `pins.yaml` pins each upstream release by version and
-  sha256; `just build` fetches it into `.build/`, verifies it and builds from it.
+  sha256; `just build` fetches it into `.build/`, verifies it and builds from it. A Rust tool's
+  crate is pinned by `Cargo.toml` and locked by checksum in `Cargo.lock`.
 - **One host builds every platform.** The C toolchain is zig (`zig cc`), pinned in
-  `.hermetic/hermetic.yaml`, with the target always explicit: linux (static, musl), darwin and
-  windows, amd64 and arm64, cross-compiled from any of them. No runner package manager, no
-  container.
+  `.hermetic/hermetic.yaml`, and the Rust tools link through it (limen's Rust lanes, the
+  toolchain pinned by `rust-toolchain.toml`), with the target always explicit: linux (static,
+  musl), darwin and windows, amd64 and arm64, cross-compiled from any of them. No runner
+  package manager, no container.
 - **Third-party source only.** Everything here builds an upstream project's own sources,
   patched only where a platform needs it (`erofs/patches`, for windows); a header-only library
   gets the smallest program around it that exercises it (`drflac`). A tool that wraps an
@@ -47,6 +50,6 @@ notes link it, and the patches a tool's directory applies, at the release's tag.
 
 ```sh
 just build              # every tool, every platform, into .build/dist
-just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs …)
+just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs, claxon …)
 just test               # each tool for this host, then run on it
 ```

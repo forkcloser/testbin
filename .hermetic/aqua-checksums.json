@@ -291,6 +291,31 @@
       "algorithm": "sha256"
     },
     {
+      "id": "github_release/github.com/rust-cross/cargo-zigbuild/v0.24.0/cargo-zigbuild-aarch64-apple-darwin.tar.xz",
+      "checksum": "C88F9B9DA35CB67B151DAD4384614F769B1B2B5D30630E381C4E9C2B28ED349E",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/rust-cross/cargo-zigbuild/v0.24.0/cargo-zigbuild-aarch64-pc-windows-msvc.zip",
+      "checksum": "C031663C9324463C5F5B45A8C94197816C7A98807A8BDBDF127542B8FE81B9FE",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/rust-cross/cargo-zigbuild/v0.24.0/cargo-zigbuild-aarch64-unknown-linux-gnu.tar.xz",
+      "checksum": "DE42626985F428033078DFC12AC8A59EE713F8E5627235EC883B1C899BEE895C",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/rust-cross/cargo-zigbuild/v0.24.0/cargo-zigbuild-x86_64-pc-windows-msvc.zip",
+      "checksum": "2F1637F56E2F59EE980FE548650E874C381A664803CE94F146808E5B9A5E2ADF",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/rust-cross/cargo-zigbuild/v0.24.0/cargo-zigbuild-x86_64-unknown-linux-gnu.tar.xz",
+      "checksum": "3CA25EE4348F9ABD0932ED4DEBE826D246E20FB616D0201DE5BD05E7F965E9D9",
+      "algorithm": "sha256"
+    },
+    {
       "id": "github_release/github.com/sigstore/cosign/v3.1.4/cosign-darwin-arm64",
       "checksum": "9F9B8CD557CF2E5B3DF3373A00BAA005A86B02391E3E06DD0CE37B3A1533D3A4",
       "algorithm": "sha256"
@@ -348,6 +373,31 @@
     {
       "id": "http/golang.org/dl/go1.27.3.windows-arm64.zip",
       "checksum": "C507872FF21F8A7CD3C1C217B059C6F7271A4A9D8E692810EF9DD3E1F601197C",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "http/static.rust-lang.org/rustup/archive/1.29.2/aarch64-apple-darwin/rustup-init",
+      "checksum": "F7C7E11EB2E07F006E532A8AAAC77B32F4527D305AC386C0C633CA6133D35CA9",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "http/static.rust-lang.org/rustup/archive/1.29.2/aarch64-pc-windows-msvc/rustup-init.exe",
+      "checksum": "58005A321C5DCB9C4457C0A13BB5D6A56A5793EFAEF429004EDAA1DB33019B59",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "http/static.rust-lang.org/rustup/archive/1.29.2/aarch64-unknown-linux-gnu/rustup-init",
+      "checksum": "A9C168DBEA81A84671C6B7A5C1795CB0EB699020110D107DDFCA427BD797E697",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "http/static.rust-lang.org/rustup/archive/1.29.2/x86_64-pc-windows-msvc/rustup-init.exe",
+      "checksum": "00F139DA614DCED87D3C3D4121C43EEBDAC3C1BF8A5EE86B9D80DFD71C8D70FD",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "http/static.rust-lang.org/rustup/archive/1.29.2/x86_64-unknown-linux-gnu/rustup-init",
+      "checksum": "5BE191E8C70A5007074254CB74D78DBFDD25CD5A61C27DE7B8E5410122EC24F4",
       "algorithm": "sha256"
     },
     {
