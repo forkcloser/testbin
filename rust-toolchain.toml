@@ -1,0 +1,14 @@
+# The Rust toolchain the Rust tools build with (limen's book/rust.md): an exact
+# release, the lint lanes' components, and every target `just build` makes.
+[toolchain]
+channel = "1.99.1"
+profile = "minimal"
+components = ["clippy", "rustfmt"]
+targets = [
+  "x86_64-unknown-linux-musl",
+  "aarch64-unknown-linux-musl",
+  "x86_64-apple-darwin",
+  "aarch64-apple-darwin",
+  "x86_64-pc-windows-gnu",
+  "aarch64-pc-windows-gnullvm",
+]

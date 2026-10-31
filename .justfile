@@ -7,14 +7,14 @@ import '.limen/just/main.just'
 platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 windows-arm64"
 
 # The FIRST recipe defined here becomes `just`'s default.
-lint: do::lint::default
-fix: do::fix::default
+lint: do::lint::default do::lint::rust::default
+fix: do::fix::default do::fix::rust::default
 # Each tool built for this host and run on it.
-test: flac-test drflac-test flake-test erofs-test
+test: flac-test drflac-test flake-test erofs-test claxon-test
 security: do::security::default
 
 # Build every tool for every platform into $LIMEN_BUILD/dist.
-build: (flac platforms) (drflac platforms) (flake platforms) (erofs platforms)
+build: (flac platforms) (drflac platforms) (flake platforms) (erofs platforms) (claxon platforms)
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
 # flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
@@ -164,6 +164,44 @@ erofs-test:
     just erofs "${platform}"
     erofs/smoke.sh "${LIMEN_BUILD}/erofs/${platform}/bin"
 
+# Build claxon (a FLAC decoder on the Claxon crate) for the given platforms
+# through limen's Rust lane, archived with Claxon's licence and this
+# repository's (src/main.rs is ours) into
+# $LIMEN_BUILD/dist/claxon-<crate version>-<platform>.tar.gz.
+claxon +targets:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    set -- {{ targets }}
+    triples=()
+    for platform in "$@"; do
+        triples+=("$(just _rust-target "${platform}")")
+    done
+    just do build rust targets "${triples[@]}"
+    version=$(just _crate-version claxon)
+    licence=$(echo "${LIMEN_BUILD}"/cargo/registry/src/*/"claxon-${version}/license")
+    mkdir -p "${LIMEN_BUILD}/dist"
+    for platform in "$@"; do
+        x=""
+        case "${platform}" in windows-*) x=".exe" ;; esac
+        name="claxon-${version}-${platform}"
+        stage="${LIMEN_BUILD}/stage/${name}"
+        rm -rf "${stage}"
+        mkdir -p "${stage}"
+        cp "target/$(just _rust-target "${platform}")/release/claxon${x}" "${stage}/"
+        cp "${licence}" "${stage}/LICENSE.claxon"
+        cp LICENSE "${stage}/LICENSE"
+        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
+        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+    done
+
+# Build claxon for this host and decode flac's encodings of arbitrary PCM with it.
+claxon-test: flac-test
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    just claxon "${platform}"
+    claxon/smoke.sh "target/$(just _rust-target "${platform}")/release" "${LIMEN_BUILD}/flac/${platform}/bin"
+
 # Rewrite flake/locks from a publish of this host's platform: after a .NET SDK
 # or a CUETools bump changes what the projects reference.
 flake-lock: (_fetch "cuetools")
@@ -244,6 +282,7 @@ release-notes:
     echo "  patched with this repository's erofs/patches and built with its erofs/mingw-compat"
     echo "  headers (windows) at this release's tag"
     echo "- lz4 $(limen pins get lz4 version): $(limen pins get lz4 url)"
+    echo "- Claxon $(just _crate-version claxon): https://static.crates.io/crates/claxon/claxon-$(just _crate-version claxon).crate"
 
 # Fetch a pinned source to $LIMEN_BUILD/src/<name>-<version>.<ext>, verify it
 # against pins.yaml on every run (a reused build directory keeps the tarball),
@@ -272,6 +311,26 @@ _fetch name:
     rm -rf "${dir:?}/{{ name }}-${version}"
     mkdir -p "${dir}/{{ name }}-${version}"
     tar -xf "${archive}" -C "${dir}/{{ name }}-${version}" --strip-components=1
+
+# The Rust target of a platform: musl on linux (static); on windows the GNU ABI
+# for amd64 and its LLVM flavour for arm64, the one Rust ships for it.
+_rust-target platform:
+    #!/usr/bin/env bash
+    case "{{ platform }}" in
+        linux-amd64) echo x86_64-unknown-linux-musl ;;
+        linux-arm64) echo aarch64-unknown-linux-musl ;;
+        darwin-amd64) echo x86_64-apple-darwin ;;
+        darwin-arm64) echo aarch64-apple-darwin ;;
+        windows-amd64) echo x86_64-pc-windows-gnu ;;
+        windows-arm64) echo aarch64-pc-windows-gnullvm ;;
+        *) echo "unknown platform {{ platform }} (one of {{ platforms }})" >&2; exit 1 ;;
+    esac
+
+# The version Cargo.lock locks a crate at.
+_crate-version crate:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    awk -v crate='{{ crate }}' '$0 == "name = \"" crate "\"" { getline; gsub(/version = |"/, ""); print; exit }' Cargo.lock
 
 # The zig target of a platform: musl on linux (static), the GNU ABI on windows.
 _zig-target platform:
