@@ -10,11 +10,11 @@ platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 wi
 lint: do::lint::default do::lint::rust::default
 fix: do::fix::default do::fix::rust::default
 # Each tool built for this host and run on it.
-test: flac-test drflac-test flake-test erofs-test claxon-test symphonia-test
+test: flac-test drflac-test microflac-test flake-test erofs-test claxon-test symphonia-test
 security: do::security::default
 
 # Build every tool for every platform into $LIMEN_BUILD/dist.
-build: (flac platforms) (drflac platforms) (flake platforms) (erofs platforms) (claxon platforms) (symphonia platforms)
+build: (flac platforms) (drflac platforms) (microflac platforms) (flake platforms) (erofs platforms) (claxon platforms) (symphonia platforms)
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
 # flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
@@ -85,6 +85,43 @@ drflac-test: flac-test
     platform=$(just _host-platform)
     just drflac "${platform}"
     drflac/smoke.sh "${LIMEN_BUILD}/drflac/${platform}/bin" "${LIMEN_BUILD}/flac/${platform}/bin"
+
+# Build microflac (a FLAC decoder on microFLAC) for the given platforms,
+# archived with microFLAC's licence and this repository's (main.cpp is ours)
+# into $LIMEN_BUILD/dist/microflac-<version>-<platform>.tar.gz.
+microflac +targets: (_fetch "microflac")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export ZIG_GLOBAL_CACHE_DIR="${LIMEN_BUILD}/zig/global" ZIG_LOCAL_CACHE_DIR="${LIMEN_BUILD}/zig/local"
+    version=$(limen pins get microflac version)
+    src="${LIMEN_BUILD}/src/microflac-${version}"
+    mkdir -p "${LIMEN_BUILD}/dist"
+    set -- {{ targets }}
+    for platform in "$@"; do
+        out="${LIMEN_BUILD}/microflac/${platform}"
+        rm -rf "${out}"
+        microflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
+        x=""
+        case "${platform}" in windows-*) x=".exe" ;; esac
+        name="microflac-${version}-${platform}"
+        stage="${LIMEN_BUILD}/stage/${name}"
+        rm -rf "${stage}"
+        mkdir -p "${stage}"
+        cp "${out}/bin/microflac${x}" "${stage}/"
+        cp "${src}/LICENSE" "${stage}/LICENSE.microflac"
+        cp LICENSE "${stage}/LICENSE"
+        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
+        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+    done
+
+# Build microflac for this host and decode flac's encodings of arbitrary PCM
+# with it, at 16, 24 and 32 bits.
+microflac-test: flac-test
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    just microflac "${platform}"
+    microflac/smoke.sh "${LIMEN_BUILD}/microflac/${platform}/bin" "${LIMEN_BUILD}/flac/${platform}/bin"
 
 # Publish CUETools.Flake for the given platforms with the pinned .NET SDK, each
 # archived with upstream's four licence notices into
@@ -325,6 +362,7 @@ release-notes:
     echo
     echo "- flac $(limen pins get flac version): $(limen pins get flac url)"
     echo "- dr_flac $(limen pins get drflac version): $(limen pins get drflac url)"
+    echo "- microFLAC $(limen pins get microflac version): $(limen pins get microflac url)"
     echo "- CUETools $(limen pins get cuetools version): $(limen pins get cuetools url)"
     echo "- erofs-utils $(limen pins get erofs-utils version): $(limen pins get erofs-utils url),"
     echo "  patched with this repository's erofs/patches and built with its erofs/mingw-compat"

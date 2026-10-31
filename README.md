@@ -10,6 +10,7 @@ other uses, or covered by any compatibility promise.
 |---|---|---|
 | [`flac/`](flac/) | `flac`, `metaflac` | [xiph/flac](https://github.com/xiph/flac) |
 | [`drflac/`](drflac/) | `drflac`, a FLAC decoder on dr_flac | [mackron/dr_libs](https://github.com/mackron/dr_libs) |
+| [`microflac/`](microflac/) | `microflac`, a FLAC decoder on microFLAC | [esphome-libs/micro-flac](https://github.com/esphome-libs/micro-flac) |
 | [`flake/`](flake/) | `CUETools.Flake`, CUETools' FLAC encoder | [gchudov/cuetools.net](https://github.com/gchudov/cuetools.net) |
 | [`erofs/`](erofs/) | `mkfs.erofs` | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) |
 | [`claxon/`](claxon/) | `claxon`, a FLAC decoder on Claxon | [ruuda/claxon](https://github.com/ruuda/claxon) |
@@ -29,10 +30,10 @@ sources, and states the upstream licence its sources, patches and binaries are u
   musl), darwin and windows, amd64 and arm64, cross-compiled from any of them. No runner
   package manager, no container.
 - **Third-party source only.** Everything here builds an upstream project's own sources,
-  patched only where a platform needs it (`erofs/patches`, for windows); a header-only library
-  gets the smallest program around it that exercises it (`drflac`). A tool that wraps an
-  operating system's API has no third-party source to build and lives with the repository that
-  uses it.
+  patched only where a platform needs it (`erofs/patches`, for windows); a library that ships
+  no program gets the smallest one around it that exercises it (`drflac`, `microflac`, `claxon`,
+  `symphonia`). A tool that wraps an operating system's API has no third-party source to build
+  and lives with the repository that uses it.
 - **Every binary runs where it ships.** CI builds each platform and runs it on that platform's
   runner (`just test`); the release workflow runs the published archives themselves on all six
   platforms before attaching them.
