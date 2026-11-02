@@ -250,6 +250,11 @@ claxon +targets:
     for platform in "$@"; do
         triples+=("$(just _rust-target "${platform}")")
     done
+    if [ "$(rustc -vV 2>/dev/null | sed -n 's/^host: //p')" = aarch64-pc-windows-gnullvm ] || [ "${RUNNER_OS:-}/${RUNNER_ARCH:-}" = Windows/ARM64 ]; then
+        export CARGO_UNSTABLE_HOST_CONFIG=true
+        CARGO_HOST_LINKER="$(cygpath -m "$LIMEN_BUILD/zig/aarch64-pc-windows-gnullvm-linker.cmd")"
+        export CARGO_HOST_LINKER
+    fi
     just do build rust targets "${triples[@]}"
     version=$(just _crate-version claxon)
     licence=$(echo "${LIMEN_BUILD}"/cargo/registry/src/*/"claxon-${version}/license")
@@ -288,6 +293,11 @@ symphonia +targets:
     for platform in "$@"; do
         triples+=("$(just _rust-target "${platform}")")
     done
+    if [ "$(rustc -vV 2>/dev/null | sed -n 's/^host: //p')" = aarch64-pc-windows-gnullvm ] || [ "${RUNNER_OS:-}/${RUNNER_ARCH:-}" = Windows/ARM64 ]; then
+        export CARGO_UNSTABLE_HOST_CONFIG=true
+        CARGO_HOST_LINKER="$(cygpath -m "$LIMEN_BUILD/zig/aarch64-pc-windows-gnullvm-linker.cmd")"
+        export CARGO_HOST_LINKER
+    fi
     just do build rust targets "${triples[@]}"
     version=$(just _crate-version symphonia)
     mkdir -p "${LIMEN_BUILD}/dist"
