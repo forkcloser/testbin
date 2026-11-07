@@ -346,28 +346,28 @@
       "algorithm": "sha256"
     },
     {
-      "id": "http/static.rust-lang.org/rustup/archive/1.29.2/aarch64-apple-darwin/rustup-init",
-      "checksum": "F7C7E11EB2E07F006E532A8AAAC77B32F4527D305AC386C0C633CA6133D35CA9",
+      "id": "http/static.rust-lang.org/rustup/archive/1.29.3/aarch64-apple-darwin/rustup-init",
+      "checksum": "63752A1919A3A4793173EC70F8F212621A7CE38BA6A246095984482F4DE20F9F",
       "algorithm": "sha256"
     },
     {
-      "id": "http/static.rust-lang.org/rustup/archive/1.29.2/aarch64-pc-windows-msvc/rustup-init.exe",
-      "checksum": "58005A321C5DCB9C4457C0A13BB5D6A56A5793EFAEF429004EDAA1DB33019B59",
+      "id": "http/static.rust-lang.org/rustup/archive/1.29.3/aarch64-pc-windows-msvc/rustup-init.exe",
+      "checksum": "407E0D72F81D26A01F9D032B8317908CBB2917BA22765474B682B41390792AD9",
       "algorithm": "sha256"
     },
     {
-      "id": "http/static.rust-lang.org/rustup/archive/1.29.2/aarch64-unknown-linux-gnu/rustup-init",
-      "checksum": "A9C168DBEA81A84671C6B7A5C1795CB0EB699020110D107DDFCA427BD797E697",
+      "id": "http/static.rust-lang.org/rustup/archive/1.29.3/aarch64-unknown-linux-gnu/rustup-init",
+      "checksum": "9F608C142E0E38A78957D0661BA1DFAF0B6FB37184CFAA4B9A0AA57AF6184282",
       "algorithm": "sha256"
     },
     {
-      "id": "http/static.rust-lang.org/rustup/archive/1.29.2/x86_64-pc-windows-msvc/rustup-init.exe",
-      "checksum": "00F139DA614DCED87D3C3D4121C43EEBDAC3C1BF8A5EE86B9D80DFD71C8D70FD",
+      "id": "http/static.rust-lang.org/rustup/archive/1.29.3/x86_64-pc-windows-msvc/rustup-init.exe",
+      "checksum": "38027D51D69A5D05493627A0634DBEA52D6CD793C8F072D2373D3F4163EEC7DB",
       "algorithm": "sha256"
     },
     {
-      "id": "http/static.rust-lang.org/rustup/archive/1.29.2/x86_64-unknown-linux-gnu/rustup-init",
-      "checksum": "5BE191E8C70A5007074254CB74D78DBFDD25CD5A61C27DE7B8E5410122EC24F4",
+      "id": "http/static.rust-lang.org/rustup/archive/1.29.3/x86_64-unknown-linux-gnu/rustup-init",
+      "checksum": "B1C8CB14E30889E7E2999E6B69E62D9E9B9FFC0F4DF8180564D306D9680E6C55",
       "algorithm": "sha256"
     },
     {
@@ -396,8 +396,8 @@
       "algorithm": "sha256"
     },
     {
-      "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.579.0/registry.yaml",
-      "checksum": "5BC609335C3E930F66B52E4EF44824852868C88898137557B078570C3CE9DF94",
+      "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.581.1/registry.yaml",
+      "checksum": "78C9BE2054AEE428D1844DBF87765A7FE0D313E7226ECEB88F958CB7FD98EED8",
       "algorithm": "sha256"
     }
   ]

@@ -12,7 +12,7 @@ checksum:
 
 registries:
   - type: standard
-    ref: v4.579.0 # renovate: depName=aquaproj/aqua-registry
+    ref: v4.581.1 # renovate: depName=aquaproj/aqua-registry
   - name: local
     type: local
     path: ../.limen/hermetic-registry.yaml
@@ -35,7 +35,7 @@ packages:
   - name: ziglang/zig@0.15.2
   # The Rust tools' toolchain (limen's book/rust.md): rustup installs what
   # rust-toolchain.toml pins; cargo-zigbuild links each target through zig.
-  - name: rust-lang/rustup@1.29.2
+  - name: rust-lang/rustup@1.29.3
     registry: local
   - name: rust-cross/cargo-zigbuild@v0.24.0
   - import: ../.limen/hermetic.yaml
