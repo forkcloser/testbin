@@ -15,6 +15,7 @@ other uses, or covered by any compatibility promise.
 | [`flake/`](flake/) | `CUETools.Flake`, CUETools' FLAC encoder | [gchudov/cuetools.net](https://github.com/gchudov/cuetools.net) |
 | [`cscoreflac/`](cscoreflac/) | `cscoreflac`, a FLAC decoder on CSCore's | [filoe/cscore](https://github.com/filoe/cscore) |
 | [`erofs/`](erofs/) | `mkfs.erofs` | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) |
+| [`xz/`](xz/) | `xz` | [tukaani-project/xz](https://github.com/tukaani-project/xz) |
 | [`claxon/`](claxon/) | `claxon`, a FLAC decoder on Claxon | [ruuda/claxon](https://github.com/ruuda/claxon) |
 | [`symphonia/`](symphonia/) | `symphonia`, a FLAC decoder on Symphonia | [pdeljanov/Symphonia](https://github.com/pdeljanov/Symphonia) |
 
@@ -44,8 +45,11 @@ sources, and states the upstream licence its sources, patches and binaries are u
 
 A release (`vX.Y.Z`) carries `<tool>-<upstream version>-<os>-<arch>.tar.gz` per tool and
 platform, `checksums.txt`, and a GitHub build provenance attestation over every asset
-(`gh attestation verify <asset> --repo forkcloser/testbin`). Consume them through hermetic, like
-any other pinned tool. The corresponding source of each tool's binaries is upstream's release,
+(`gh attestation verify <asset> --repo forkcloser/testbin`). A repository consumes a tool
+through its `pins.yaml`, one entry per platform its tests run on, with
+`verify: github-attestation forkcloser/testbin`, and a recipe that fetches the host's archive,
+checks it against the pinned sha256 and puts the binary on the PATH its tests see. The
+corresponding source of each tool's binaries is upstream's release,
 pinned in `pins.yaml` (url and sha256), e.g. flac's
 `https://github.com/xiph/flac/releases/download/<version>/flac-<version>.tar.xz`; each release's
 notes link it, and the patches a tool's directory applies, at the release's tag.
@@ -54,6 +58,6 @@ notes link it, and the patches a tool's directory applies, at the release's tag.
 
 ```sh
 just build              # every tool, every platform, into .build/dist
-just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs, claxon, symphonia …)
+just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs, xz, claxon, symphonia …)
 just test               # each tool for this host, then run on it
 ```

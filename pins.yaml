@@ -78,6 +78,17 @@ pins:
     digest:
       version: 1.10.0
       sha256: 537512904744b35e232912055ccf8ec66d768639ff3abe5788d90d792ec5f48b
+  # XZ Utils' release tarball, the one upstream signs; the GitHub asset is the
+  # same file, under TLS.
+  - name: xz
+    renovate: github-releases tukaani-project/xz
+    extract-version: ^v(?<version>[0-9]+\.[0-9]+\.[0-9]+)$
+    version: 5.8.4
+    url: https://github.com/tukaani-project/xz/releases/download/v${version}/xz-${version}.tar.xz
+    verify: download
+    digest:
+      version: 5.8.4
+      sha256: 4ce24038fd4221e0d13bc1a2de7a4db56e90b92b3bf75321f6c14be73f65de4b
   # CSCore's last release tag; its FLAC decoder is compiled from the tag
   # tarball into cscoreflac, the rest of the library left out.
   - name: cscore

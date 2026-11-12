@@ -10,11 +10,11 @@ platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 wi
 lint: do::lint::default do::lint::rust::default
 fix: do::fix::default do::fix::rust::default
 # Each tool built for this host and run on it.
-test: flac-test drflac-test foxenflac-test microflac-test cscoreflac-test flake-test erofs-test claxon-test symphonia-test
+test: flac-test drflac-test foxenflac-test microflac-test cscoreflac-test flake-test erofs-test xz-test claxon-test symphonia-test
 security: do::security::default
 
 # Build every tool for every platform into $LIMEN_BUILD/dist.
-build: (flac platforms) (drflac platforms) (foxenflac platforms) (microflac platforms) (flake platforms) (cscoreflac platforms) (erofs platforms) (claxon platforms) (symphonia platforms)
+build: (flac platforms) (drflac platforms) (foxenflac platforms) (microflac platforms) (flake platforms) (cscoreflac platforms) (erofs platforms) (xz platforms) (claxon platforms) (symphonia platforms)
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
 # flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
@@ -238,6 +238,41 @@ erofs-test:
     just erofs "${platform}"
     erofs/smoke.sh "${LIMEN_BUILD}/erofs/${platform}/bin"
 
+# Build xz (XZ Utils, liblzma linked in) for the given platforms, archived
+# with upstream's licence notices into
+# $LIMEN_BUILD/dist/xz-<version>-<platform>.tar.gz.
+xz +targets: (_fetch "xz")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export ZIG_GLOBAL_CACHE_DIR="${LIMEN_BUILD}/zig/global" ZIG_LOCAL_CACHE_DIR="${LIMEN_BUILD}/zig/local"
+    version=$(limen pins get xz version)
+    src="${LIMEN_BUILD}/src/xz-${version}"
+    mkdir -p "${LIMEN_BUILD}/dist"
+    set -- {{ targets }}
+    for platform in "$@"; do
+        out="${LIMEN_BUILD}/xz/${platform}"
+        rm -rf "${out}"
+        xz/build.sh "${src}" "${version}" "$(just _zig-target "${platform}")" "${out}"
+        x=""
+        case "${platform}" in windows-*) x=".exe" ;; esac
+        name="xz-${version}-${platform}"
+        stage="${LIMEN_BUILD}/stage/${name}"
+        rm -rf "${stage}"
+        mkdir -p "${stage}"
+        cp "${out}/bin/xz${x}" "${stage}/"
+        cp "${src}/COPYING" "${src}/COPYING.0BSD" "${src}/AUTHORS" "${stage}/"
+        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
+        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+    done
+
+# Build xz for this host and run the round trips on it.
+xz-test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    just xz "${platform}"
+    xz/smoke.sh "${LIMEN_BUILD}/xz/${platform}/bin"
+
 # Build claxon (a FLAC decoder on the Claxon crate) for the given platforms
 # through limen's Rust lane, archived with Claxon's licence and this
 # repository's (src/main.rs is ours) into
@@ -455,6 +490,7 @@ release-notes:
     echo "  patched with this repository's erofs/patches and built with its erofs/mingw-compat"
     echo "  headers (windows) at this release's tag"
     echo "- lz4 $(limen pins get lz4 version): $(limen pins get lz4 url)"
+    echo "- XZ Utils $(limen pins get xz version): $(limen pins get xz url)"
     echo "- Claxon $(just _crate-version claxon): https://static.crates.io/crates/claxon/claxon-$(just _crate-version claxon).crate"
     echo "- Symphonia $(just _crate-version symphonia) and the crates it links, each from crates.io at the version and"
     echo "  checksum Cargo.lock records: $(just _crate-closure testbin-symphonia | tr '\n' ' ')"
