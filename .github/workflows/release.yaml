@@ -93,6 +93,7 @@ jobs:
           bash flake/smoke.sh unpacked/flake-*-"${PLATFORM}" "${flac}"
           bash cscoreflac/smoke.sh unpacked/cscoreflac-*-"${PLATFORM}" "${flac}"
           bash erofs/smoke.sh unpacked/erofs-*-"${PLATFORM}"
+          bash xz/smoke.sh unpacked/xz-*-"${PLATFORM}"
           bash claxon/smoke.sh unpacked/claxon-*-"${PLATFORM}" "${flac}"
           bash symphonia/smoke.sh unpacked/symphonia-*-"${PLATFORM}" "${flac}"
 
