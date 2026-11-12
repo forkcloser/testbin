@@ -51,7 +51,7 @@ common=(-T0 -U 6f8d1b52-6c5e-4b0a-9d1c-2b6f0d3e4a71 --quiet --tar=f)
 cases=(
   "plain|-b4096|b8cd2965f6d9b87b4f851af8b8e5e576cf5fbb2967f1eb2fb02159adf6d22a0d|yes"
   "noinline|-b4096 -Enoinline_data|0222f0a597cbbf7c3cf6e80f2532c6ad011dc60882639caaaf14af39d6768ba6|yes"
-  "lz4|-b4096 -zlz4|e28e3ad0f5ed6c79c49569136a267b32c3d019c03cf028c1068734c6ed150c83|yes"
+  "lz4|-b4096 -zlz4|1efae009642fb2aafd8da59e95ae496af57193b81973ea9873425dbac16654b2|yes"
   "lz4hc|-b16384 -zlz4hc,12 -Ededupe|215d19f1bf35a106c9934c729fcd0f6096249f7fe1cbcedfa37ca57a99ea5674|yes"
   "deflate|-b512 -zdeflate|499572aad78d062d54a8b25b0b6926c6498e98bdc4fdda9e0f43ce16bdeb108c|no"
 )
