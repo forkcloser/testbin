@@ -2,7 +2,8 @@
 
 `mkfs.erofs`, from [erofs-utils](https://github.com/erofs/erofs-utils)' release tag `pins.yaml`
 pins (`v<version>`, sha256), linking [lz4](https://github.com/lz4/lz4) from its pinned tag,
-built with the pinned zig for linux, darwin and windows, amd64 and arm64.
+built with the pinned zig for linux, darwin and windows, amd64 and arm64; `fsck.erofs` beside it
+on linux and darwin, where it builds.
 
 The build is configured as forkcloser/erofs's image-backed tests need it: lz4 and lz4hc, the
 built-in deflate compressor, no other compression library (zlib, liblzma, libdeflate, libzstd),
@@ -10,8 +11,9 @@ no libuuid, libselinux, curl, openssl, libxml2, json-c, liburing or fuse, and a 
 of 16 KiB on every platform. Multi-threaded compression is on except on windows.
 
 - `build.sh` compiles it for one zig target, straight from the sources configure would pick,
-  without autotools. It also builds `fsck.erofs` where it compiles (not windows), for the
-  smoke test only; the archive carries `mkfs.erofs` alone.
+  without autotools. It also builds `fsck.erofs` where it compiles (not windows): the smoke
+  test reads the images back with it, and a consumer's tests can hold their own images to its
+  verdict, so the archive carries it there.
 - `config.h` holds the values configure would find on each target, chosen from the compiler's
   own macros.
 - `patches/` are applied to the unpacked release before the build. They make the windows build

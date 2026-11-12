@@ -200,7 +200,8 @@ flake-test: flac-test
     flake/smoke.sh "${LIMEN_BUILD}/flake/${platform}" "${LIMEN_BUILD}/flac/${platform}/bin"
 
 # Build mkfs.erofs (erofs-utils, patched, linking lz4) for the given platforms,
-# archived with erofs-utils' and lz4's licence notices into
+# with fsck.erofs beside it where it builds (not windows), archived with
+# erofs-utils' and lz4's licence notices into
 # $LIMEN_BUILD/dist/erofs-<version>-<platform>.tar.gz.
 erofs +targets: (_fetch "erofs-utils") (_fetch "lz4")
     #!/usr/bin/env bash
@@ -222,6 +223,7 @@ erofs +targets: (_fetch "erofs-utils") (_fetch "lz4")
         rm -rf "${stage}"
         mkdir -p "${stage}/LICENSES"
         cp "${out}/bin/mkfs.erofs${x}" "${stage}/"
+        [ ! -e "${out}/bin/fsck.erofs" ] || cp "${out}/bin/fsck.erofs" "${stage}/"
         cp "${src}/COPYING" "${stage}/"
         cp "${src}/LICENSES/GPL-2.0" "${src}/LICENSES/MIT" "${stage}/LICENSES/"
         cp "${lz4}/lib/LICENSE" "${stage}/LICENSE.lz4"

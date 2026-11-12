@@ -14,7 +14,7 @@ other uses, or covered by any compatibility promise.
 | [`microflac/`](microflac/) | `microflac`, a FLAC decoder on microFLAC | [esphome-libs/micro-flac](https://github.com/esphome-libs/micro-flac) |
 | [`flake/`](flake/) | `CUETools.Flake`, CUETools' FLAC encoder | [gchudov/cuetools.net](https://github.com/gchudov/cuetools.net) |
 | [`cscoreflac/`](cscoreflac/) | `cscoreflac`, a FLAC decoder on CSCore's | [filoe/cscore](https://github.com/filoe/cscore) |
-| [`erofs/`](erofs/) | `mkfs.erofs` | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) |
+| [`erofs/`](erofs/) | `mkfs.erofs`, `fsck.erofs` (not windows) | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) |
 | [`xz/`](xz/) | `xz` | [tukaani-project/xz](https://github.com/tukaani-project/xz) |
 | [`claxon/`](claxon/) | `claxon`, a FLAC decoder on Claxon | [ruuda/claxon](https://github.com/ruuda/claxon) |
 | [`symphonia/`](symphonia/) | `symphonia`, a FLAC decoder on Symphonia | [pdeljanov/Symphonia](https://github.com/pdeljanov/Symphonia) |
