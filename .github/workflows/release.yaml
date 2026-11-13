@@ -7,6 +7,10 @@
 # binaries on its own platform, then attests every archive and checksums.txt
 # and attaches them to the release. workflow_dispatch is the dry run: build
 # and smoke, no publish.
+#
+# Nothing here is restored from a cache, and nothing is saved to one: what is
+# published is built from the pinned sources by this run alone. ci.yaml keeps
+# zig's runtime libraries between runs; this file must not.
 name: release
 
 on:
@@ -67,6 +71,22 @@ jobs:
           persist-credentials: false
       - name: Install hermetic (pinned, verified)
         uses: ./.github/actions/setup-hermetic
+      # The guard for the rule in this file's header, and no list of what a
+      # cache might hold: the checkout is its committed files and nothing
+      # else, ignored files included, and the output directory is empty, or
+      # the release fails here.
+      - name: Nothing built or cached before the build
+        run: |
+          tree=$(git status --porcelain --ignored)
+          output=""
+          if [ -d "${LIMEN_BUILD}" ]; then
+            output=$(find "${LIMEN_BUILD}" -mindepth 1 -maxdepth 1)
+          fi
+          if [ -n "${tree}${output}" ]; then
+            echo "::error::a release is built from the commit and the pinned sources alone; found before the build:"
+            printf '%s\n' "${tree}" "${output}"
+            exit 1
+          fi
       - id: group
         name: Build the group for every platform
         env:

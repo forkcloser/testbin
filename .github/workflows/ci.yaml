@@ -68,6 +68,26 @@ jobs:
           persist-credentials: false
       - name: Install hermetic (pinned, verified)
         uses: ./.github/actions/setup-hermetic
+      # zig compiles its runtime libraries (compiler-rt, each target's libc,
+      # libc++) into its global cache on first use, which is most of a cold
+      # build. That directory alone is kept between runs, one entry a group
+      # and zig version: every source file is still compiled by every run.
+      # The release workflow keeps nothing and restores nothing.
+      - id: zig
+        name: The zig cache's key
+        shell: bash
+        env:
+          TOOLS: ${{ matrix.tools }}
+        run: |
+          {
+            echo "version=$(zig version)"
+            echo "group=${TOOLS// /+}"
+          } >> "$GITHUB_OUTPUT"
+      - id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.LIMEN_BUILD }}/zig/global
+          key: zig-global-${{ runner.os }}-${{ runner.arch }}-${{ steps.zig.outputs.version }}-${{ steps.zig.outputs.group }}
       - name: Build the group for every platform
         shell: bash
         env:
@@ -75,6 +95,14 @@ jobs:
         run: |
           read -r -a tools <<< "$TOOLS"
           just build-group "${tools[@]}"
+      # The default branch only, and only on a miss: an entry a pull request
+      # run saves is restorable by that pull request alone, and a key is
+      # never overwritten.
+      - if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.LIMEN_BUILD }}/zig/global
+          key: ${{ steps.cache.outputs.cache-primary-key }}
 
   # The ONE required status check (defaultRequiredChecks in
   # internal/github/audit.go). Requiring the lanes by name would bake the
