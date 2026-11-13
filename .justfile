@@ -7,7 +7,7 @@ import '.limen/just/main.just'
 platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 windows-arm64"
 
 # The FIRST recipe defined here becomes `just`'s default.
-lint: do::lint::default do::lint::rust::default
+lint: do::lint::default do::lint::rust::default do::lint::converge
 fix: do::fix::default do::fix::rust::default
 # Each tool built for this host and run on it.
 test: flac-test drflac-test foxenflac-test microflac-test cscoreflac-test flake-test erofs-test xz-test claxon-test symphonia-test
@@ -418,6 +418,10 @@ flake-lock: (_fetch "cuetools")
     version=$(limen pins get cuetools version)
     FLAKE_LOCKED=false FLAKE_LOCK_UPDATE=true flake/build.sh "${LIMEN_BUILD}/src/cuetools-${version}" \
         "$(just _dotnet-rid "$(just _host-platform)")" "${LIMEN_BUILD}/flake/lock"
+
+# Rewrite every file .converge declares, the NuGet lock files, from the tree
+# as it stands. The same files whatever host runs it.
+converge: cscoreflac-lock flake-lock
 
 # The pinned .NET SDK for this host, fetched, verified against pins.yaml and
 # unpacked once; prints the environment that puts it on PATH, for `eval`. Its
