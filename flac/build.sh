@@ -13,6 +13,8 @@ target=${3:?zig target}
 out=${4:?output directory}
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=scripts/jobs.sh
+. "${here}/../scripts/jobs.sh"
 work="${out}/obj"
 mkdir -p "${work}" "${out}/bin"
 
@@ -55,6 +57,7 @@ metaflac=(
 
 # compile <object prefix> <source dir> <names...> [-- <extra flags...>]: one
 # object per source, named with its directory so equal basenames do not clash.
+# The compilers run side by side; join before linking.
 compile() {
   local prefix=$1 dir=$2
   shift 2
@@ -70,7 +73,7 @@ compile() {
   done
   local name
   for name in "${names[@]}"; do
-    zig cc "${cflags[@]}" ${extra[@]+"${extra[@]}"} -c "${src}/${dir}/${name}.c" \
+    spawn zig cc "${cflags[@]}" ${extra[@]+"${extra[@]}"} -c "${src}/${dir}/${name}.c" \
       -o "${work}/${prefix}-${name//\//-}.o"
   done
 }
@@ -79,6 +82,7 @@ compile libflac src/libFLAC "${libflac[@]}" -- "${libflac_flags[@]}"
 compile share src/share "${share[@]}"
 compile flac src/flac "${flac[@]}"
 compile metaflac src/metaflac "${metaflac[@]}"
+join
 
 zig cc -target "${target}" -o "${out}/bin/flac${exe}" \
   "${work}"/libflac-*.o "${work}"/share-*.o "${work}"/flac-*.o -lm
