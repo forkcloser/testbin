@@ -2,10 +2,11 @@
 # goreleaser lane does not apply; same construction rules: SHA-pinned actions,
 # per-job permissions, bash everywhere).
 #
-# A pushed v* tag builds every tool for every platform on one linux host (zig
-# cross-compiles them all), runs each archive's binaries on its own platform,
-# then attests every archive and checksums.txt and attaches them to the
-# release. workflow_dispatch is the dry run: build and smoke, no publish.
+# A pushed v* tag builds every tool for every platform on linux hosts (zig
+# cross-compiles them all), one runner a group of tools, runs each archive's
+# binaries on its own platform, then attests every archive and checksums.txt
+# and attaches them to the release. workflow_dispatch is the dry run: build
+# and smoke, no publish.
 name: release
 
 on:
@@ -23,7 +24,39 @@ defaults:
     shell: bash
 
 jobs:
+  # The groups `just build` builds, read from the .justfile, and the release
+  # notes' source section, which needs the pins and no build.
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      groups: ${{ steps.groups.outputs.groups }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install hermetic (pinned, verified)
+        uses: ./.github/actions/setup-hermetic
+      - id: groups
+        name: The build groups
+        run: echo "groups=$(just build-matrix)" >> "$GITHUB_OUTPUT"
+      - name: The release notes' source section
+        run: mkdir -p .build && just release-notes > .build/notes.md
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: notes
+          path: .build/notes.md
+          if-no-files-found: error
+
   build:
+    needs: plan
+    strategy:
+      # Every group or no release: a failed group stops the others.
+      matrix:
+        tools: ${{ fromJSON(needs.plan.outputs.groups) }}
+    name: build (${{ matrix.tools }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -34,19 +67,18 @@ jobs:
           persist-credentials: false
       - name: Install hermetic (pinned, verified)
         uses: ./.github/actions/setup-hermetic
-      - name: Build every tool for every platform
-        run: just build
-      - name: The release notes' source section
-        run: just release-notes > .build/notes.md
+      - id: group
+        name: Build the group for every platform
+        env:
+          TOOLS: ${{ matrix.tools }}
+        run: |
+          read -r -a tools <<< "$TOOLS"
+          just build-group "${tools[@]}"
+          echo "name=${TOOLS// /+}" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: dist
+          name: dist-${{ steps.group.outputs.name }}
           path: .build/dist/*.tar.gz
-          if-no-files-found: error
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: notes
-          path: .build/notes.md
           if-no-files-found: error
 
   # The published archives themselves, run where they will run: a binary that
@@ -74,7 +106,8 @@ jobs:
       # coreutils.
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: dist
+          pattern: dist-*
+          merge-multiple: true
           path: dist
       - name: Run the archive's binaries
         env:
@@ -99,7 +132,7 @@ jobs:
   publish:
     # Tag pushes only: a workflow_dispatch run stops after the smoke legs.
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, smoke]
+    needs: [plan, build, smoke]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -111,7 +144,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: dist
+          pattern: dist-*
+          merge-multiple: true
           path: dist
       - name: Checksums
         run: cd dist && sha256sum -- *.tar.gz > checksums.txt

@@ -28,10 +28,36 @@ jobs:
       # with:
       #   os: '["ubuntu-24.04", "macos-15"]'
 
-  # Every tool for every platform, cross-built from one linux host with the
-  # pinned zig, the way a release builds them. The verify legs build their
-  # own platform and run it (`just test`).
+  # The groups `just build` builds, read from the .justfile: a tool added
+  # there is built here with no edit to this file.
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      groups: ${{ steps.groups.outputs.groups }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install hermetic (pinned, verified)
+        uses: ./.github/actions/setup-hermetic
+      - id: groups
+        name: The build groups
+        shell: bash
+        run: echo "groups=$(just build-matrix)" >> "$GITHUB_OUTPUT"
+
+  # Every tool for every platform, cross-built on linux hosts with the pinned
+  # zig, one runner a group of tools, the way a release builds them. The
+  # verify legs build their own platform and run it (`just test`).
   build:
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix:
+        tools: ${{ fromJSON(needs.plan.outputs.groups) }}
+    name: build (${{ matrix.tools }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -42,15 +68,20 @@ jobs:
           persist-credentials: false
       - name: Install hermetic (pinned, verified)
         uses: ./.github/actions/setup-hermetic
-      - name: Build every tool for every platform
-        run: just build
+      - name: Build the group for every platform
+        shell: bash
+        env:
+          TOOLS: ${{ matrix.tools }}
+        run: |
+          read -r -a tools <<< "$TOOLS"
+          just build-group "${tools[@]}"
 
   # The ONE required status check (defaultRequiredChecks in
   # internal/github/audit.go). Requiring the lanes by name would bake the
   # runner list into every ruleset; this job collapses them to one stable
   # name. A project job joins `needs` and the assertion below.
   gate:
-    needs: [limen, build]
+    needs: [limen, plan, build]
     # always(), and the result asserted explicitly. Without always() a failed
     # or cancelled dependency SKIPS this job instead of failing it, and a
     # skipped required check does not block a merge — branch protection that
@@ -66,8 +97,9 @@ jobs:
           # Via env, never interpolated into the script: the shell sees data,
           # not something the expression layer can rewrite into code.
           LIMEN: ${{ needs.limen.result }}
+          PLAN: ${{ needs.plan.result }}
           BUILD: ${{ needs.build.result }}
         shell: bash
         run: |
-          printf 'limen: %s\nbuild: %s\n' "$LIMEN" "$BUILD"
-          [ "$LIMEN" = "success" ] && [ "$BUILD" = "success" ]
+          printf 'limen: %s\nplan: %s\nbuild: %s\n' "$LIMEN" "$PLAN" "$BUILD"
+          [ "$LIMEN" = "success" ] && [ "$PLAN" = "success" ] && [ "$BUILD" = "success" ]
