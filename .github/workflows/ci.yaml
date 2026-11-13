@@ -47,6 +47,35 @@ jobs:
         name: The build groups
         shell: bash
         run: echo "groups=$(just build-matrix)" >> "$GITHUB_OUTPUT"
+      # release.yaml restores nothing from a cache. Its own guard sees the
+      # checkout and $LIMEN_BUILD; the tools hermetic installs live under
+      # $HOME, out of its sight. What holds there is this: release.yaml uses
+      # these actions and no other, and setup-hermetic uses none.
+      - name: The release uses no cache action
+        shell: bash
+        run: |
+          export LC_ALL=C
+          allowed=$(printf '%s\n' \
+            ./.github/actions/setup-hermetic \
+            actions/attest-build-provenance \
+            actions/checkout \
+            actions/download-artifact \
+            actions/upload-artifact | sort)
+          # The key as YAML may spell it: quoted, blanks before the colon.
+          key="[\"']?uses[\"']?[[:space:]]*:[[:space:]]*"
+          used=$(grep -oE "${key}[^@[:space:]]+" .github/workflows/release.yaml | sed -E "s/^${key}//" | sort -u)
+          other=$(comm -13 <(echo "${allowed}") <(echo "${used}"))
+          # The whole directory, whatever the action's file is called.
+          if [ ! -f .github/actions/setup-hermetic/action.yaml ]; then
+            echo "::error::.github/actions/setup-hermetic/action.yaml is not there: this check reads it"
+            exit 1
+          fi
+          nested=$(grep -rnE "${key}" .github/actions/setup-hermetic || true)
+          if [ -n "${other}${nested}" ]; then
+            echo "::error::a release is built with no cache: release.yaml may use the listed actions alone, and setup-hermetic none; found:"
+            printf '%s\n' "${other}" "${nested}"
+            exit 1
+          fi
 
   # Every tool for every platform, cross-built on linux hosts with the pinned
   # zig, one runner a group of tools, the way a release builds them. The
