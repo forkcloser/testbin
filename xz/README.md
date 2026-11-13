@@ -1,8 +1,8 @@
 # xz
 
 `xz` from [XZ Utils](https://github.com/tukaani-project/xz), built from the release tarball
-`pins.yaml` pins (version and sha256), with the pinned zig for linux, darwin and windows,
-amd64 and arm64. liblzma is compiled into the program; there is no shared library.
+`pins.yaml` pins (version and sha256), with the pinned zig for linux and windows,
+amd64 and arm64, and darwin arm64. liblzma is compiled into the program; there is no shared library.
 
 The build is the full one: every filter encoder and decoder (LZMA1, LZMA2, the BCJ filters,
 delta), every match finder, the three checks, the threaded encoder and decoder, the `.lz`

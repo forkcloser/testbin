@@ -6,7 +6,7 @@
 #   smoke.sh <directory holding mkfs.erofs>
 # A tar fixes every name, mode, owner and time, and -T0 and -U fix the rest,
 # so an image depends on mkfs.erofs alone: one sha256 per option set holds for
-# all six builds. The block size is always explicit, since mkfs.erofs's default
+# all five builds. The block size is always explicit, since mkfs.erofs's default
 # is the host's page size.
 set -euo pipefail
 

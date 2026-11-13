@@ -6,12 +6,12 @@
   <PropertyGroup>
     <!-- Every NuGet package a project references is pinned by its sha512 in a
          lock file of flake/locks (FlakeLockDir), one per project, restored in
-         locked mode in CI (FlakeLocked=true); the six runtime identifiers are
+         locked mode in CI (FlakeLocked=true); the five runtime identifiers are
          restored together, so one lock serves every platform. -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <NuGetLockFilePath>$(FlakeLockDir)/$(MSBuildProjectName).lock.json</NuGetLockFilePath>
     <RestoreLockedMode Condition="'$(FlakeLocked)' == 'true'">true</RestoreLockedMode>
-    <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64;win-x64;win-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>linux-x64;linux-arm64;osx-arm64;win-x64;win-arm64</RuntimeIdentifiers>
     <!-- The tree is a tarball inside this repository's checkout: SourceLink
          would stamp upstream's binaries with this repository's commit. -->
     <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>

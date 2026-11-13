@@ -29,8 +29,8 @@ jobs:
       #   os: '["ubuntu-24.04", "macos-15"]'
 
   # Every tool for every platform, cross-built from one linux host with the
-  # pinned zig. The verify legs build their own platform and run it (`just
-  # test`); this job proves the targets no runner is (darwin amd64) build too.
+  # pinned zig, the way a release builds them. The verify legs build their
+  # own platform and run it (`just test`).
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 30

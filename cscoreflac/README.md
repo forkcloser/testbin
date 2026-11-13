@@ -2,8 +2,8 @@
 
 A FLAC decoder on [CSCore](https://github.com/filoe/cscore)'s (C#, the decoder the NAudio.Flac
 packages derive from), from the release tag `pins.yaml` pins (sha256), published with the .NET
-SDK `pins.yaml` pins per platform, self-contained, as one file, for linux, darwin and windows,
-amd64 and arm64.
+SDK `pins.yaml` pins per platform, self-contained, as one file, for linux and windows, amd64
+and arm64, and darwin arm64.
 
 ```sh
 cscoreflac <input.flac> <output.raw>

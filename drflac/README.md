@@ -2,7 +2,7 @@
 
 A FLAC decoder on [dr_flac](https://github.com/mackron/dr_libs) (`dr_flac.h`, single header),
 from the dr_libs release tag `pins.yaml` pins (`flac-<version>`, sha256), built with the pinned
-zig for linux, darwin and windows, amd64 and arm64.
+zig for linux and windows, amd64 and arm64, and darwin arm64.
 
 ```sh
 drflac <input.flac> <output.raw>

@@ -1,8 +1,8 @@
 # flac
 
 `flac` and `metaflac` from [xiph/flac](https://github.com/xiph/flac), built from the release
-tarball `pins.yaml` pins (version and sha256), with the pinned zig for linux, darwin and windows,
-amd64 and arm64.
+tarball `pins.yaml` pins (version and sha256), with the pinned zig for linux and windows,
+amd64 and arm64, and darwin arm64.
 
 - `build.sh` compiles libFLAC, the shared helpers and the two programs for one zig target.
 - `config.h` stands in for the one upstream's CMake generates: the same keys, valued per target

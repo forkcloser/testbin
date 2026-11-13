@@ -4,7 +4,7 @@
 # the input.
 #   smoke.sh <directory holding xz>
 # xz's output depends on the options and liblzma alone, never on the CPU's
-# CRC unit or the thread count, so one sha256 per option set holds for all six
+# CRC unit or the thread count, so one sha256 per option set holds for all five
 # builds; the digests recorded here are also what upstream's own build of the
 # same release writes.
 set -euo pipefail

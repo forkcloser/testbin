@@ -4,7 +4,7 @@
 import '.limen/just/main.just'
 
 # Every target a tool is built for, as os-arch; `just build` builds them all.
-platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 windows-arm64"
+platforms := "linux-amd64 linux-arm64 darwin-arm64 windows-amd64 windows-arm64"
 
 # The FIRST recipe defined here becomes `just`'s default.
 lint: do::lint::default do::lint::rust::default
@@ -466,7 +466,6 @@ _dotnet-rid platform:
     case "{{ platform }}" in
         linux-amd64) echo linux-x64 ;;
         linux-arm64) echo linux-arm64 ;;
-        darwin-amd64) echo osx-x64 ;;
         darwin-arm64) echo osx-arm64 ;;
         windows-amd64) echo win-x64 ;;
         windows-arm64) echo win-arm64 ;;
@@ -532,7 +531,6 @@ _rust-target platform:
     case "{{ platform }}" in
         linux-amd64) echo x86_64-unknown-linux-musl ;;
         linux-arm64) echo aarch64-unknown-linux-musl ;;
-        darwin-amd64) echo x86_64-apple-darwin ;;
         darwin-arm64) echo aarch64-apple-darwin ;;
         windows-amd64) echo x86_64-pc-windows-gnu ;;
         windows-arm64) echo aarch64-pc-windows-gnullvm ;;
@@ -575,7 +573,6 @@ _zig-target platform:
     case "{{ platform }}" in
         linux-amd64) echo x86_64-linux-musl ;;
         linux-arm64) echo aarch64-linux-musl ;;
-        darwin-amd64) echo x86_64-macos ;;
         darwin-arm64) echo aarch64-macos ;;
         windows-amd64) echo x86_64-windows-gnu ;;
         windows-arm64) echo aarch64-windows-gnu ;;

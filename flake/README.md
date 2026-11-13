@@ -2,7 +2,7 @@
 
 `CUETools.Flake`, the FLAC encoder of [CUETools](https://github.com/gchudov/cuetools.net)
 (Flake, a C# encoder), from the release tag `pins.yaml` pins (`v<version>`, sha256), published
-self-contained as one file for linux, darwin and windows, amd64 and arm64, by the .NET SDK
+self-contained as one file for linux and windows, amd64 and arm64, and darwin arm64, by the .NET SDK
 `pins.yaml` pins per platform (Microsoft's archives; each matches Microsoft's published sha512).
 
 ```sh
@@ -13,7 +13,7 @@ CUETools.Flake [options] <input.wav|input.flac> -o <output.flac>
   framework (`netcoreapp2.0`); the build sets `TargetFrameworks=net10.0` globally rather than
   editing upstream's projects.
 - `Directory.Build.props` is copied into the unpacked tree: NuGet lock files (`locks/`, one per
-  project, restored in locked mode), all six runtime identifiers, SourceLink off (the tree sits
+  project, restored in locked mode), all five runtime identifiers, SourceLink off (the tree sits
   inside this repository's checkout), a deterministic build.
 - `standalone.targets` makes upstream's project references private again: CUETools' application
   loads its codecs from a shared plugins directory, so its projects do not copy each other's
