@@ -1,0 +1,6 @@
+# The NuGet lock files: they follow the .NET SDK pins and the cscore and
+# cuetools ones. `just converge` rewrites them.
+cscoreflac/packages.lock.json
+flake/locks/CUETools.Codecs.Flake.lock.json
+flake/locks/CUETools.Codecs.lock.json
+flake/locks/CUETools.Flake.lock.json
