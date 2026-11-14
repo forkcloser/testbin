@@ -6,6 +6,12 @@ import '.limen/just/main.just'
 # Every target a tool is built for, as os-arch; `just build` builds them all.
 platforms := "linux-amd64 linux-arm64 darwin-arm64 windows-amd64 windows-arm64"
 
+# Every tool `just build` builds, in the groups the workflows build side by
+# side, one runner a group, `|` between groups. The tools of a group share a
+# toolchain to fetch (the .NET SDK, the Rust toolchain) or are too small for
+# a runner of their own. A tool missing here is built by nothing.
+build_groups := "flac|microflac|xz|erofs|drflac foxenflac|flake cscoreflac|claxon symphonia"
+
 # The FIRST recipe defined here becomes `just`'s default.
 lint: do::lint::default do::lint::rust::default
 fix: do::fix::default do::fix::rust::default
@@ -14,7 +20,29 @@ test: flac-test drflac-test foxenflac-test microflac-test cscoreflac-test flake-
 security: do::security::default
 
 # Build every tool for every platform into $LIMEN_BUILD/dist.
-build: (flac platforms) (drflac platforms) (foxenflac platforms) (microflac platforms) (flake platforms) (cscoreflac platforms) (erofs platforms) (xz platforms) (claxon platforms) (symphonia platforms)
+build: (build-group replace(build_groups, "|", " "))
+
+# Build the named tools for every platform into $LIMEN_BUILD/dist.
+build-group +tools:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    set -- {{ tools }}
+    for tool in "$@"; do
+        just "${tool}" {{ platforms }}
+    done
+
+# build_groups as the JSON array a workflow's matrix reads, one string a group.
+build-matrix:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    IFS='|' read -r -a groups <<< "{{ build_groups }}"
+    printf '['
+    sep=""
+    for group in "${groups[@]}"; do
+        printf '%s"%s"' "${sep}" "${group}"
+        sep=","
+    done
+    printf ']\n'
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
 # flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.

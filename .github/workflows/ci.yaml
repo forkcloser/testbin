@@ -28,10 +28,65 @@ jobs:
       # with:
       #   os: '["ubuntu-24.04", "macos-15"]'
 
-  # Every tool for every platform, cross-built from one linux host with the
-  # pinned zig, the way a release builds them. The verify legs build their
-  # own platform and run it (`just test`).
+  # The groups `just build` builds, read from the .justfile: a tool added
+  # there is built here with no edit to this file.
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      groups: ${{ steps.groups.outputs.groups }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install hermetic (pinned, verified)
+        uses: ./.github/actions/setup-hermetic
+      - id: groups
+        name: The build groups
+        shell: bash
+        run: echo "groups=$(just build-matrix)" >> "$GITHUB_OUTPUT"
+      # release.yaml restores nothing from a cache. Its own guard sees the
+      # checkout and $LIMEN_BUILD; the tools hermetic installs live under
+      # $HOME, out of its sight. What holds there is this: release.yaml uses
+      # these actions and no other, and setup-hermetic uses none.
+      - name: The release uses no cache action
+        shell: bash
+        run: |
+          export LC_ALL=C
+          allowed=$(printf '%s\n' \
+            ./.github/actions/setup-hermetic \
+            actions/attest-build-provenance \
+            actions/checkout \
+            actions/download-artifact \
+            actions/upload-artifact | sort)
+          # The key as YAML may spell it: quoted, blanks before the colon.
+          key="[\"']?uses[\"']?[[:space:]]*:[[:space:]]*"
+          used=$(grep -oE "${key}[^@[:space:]]+" .github/workflows/release.yaml | sed -E "s/^${key}//" | sort -u)
+          other=$(comm -13 <(echo "${allowed}") <(echo "${used}"))
+          # The whole directory, whatever the action's file is called.
+          if [ ! -f .github/actions/setup-hermetic/action.yaml ]; then
+            echo "::error::.github/actions/setup-hermetic/action.yaml is not there: this check reads it"
+            exit 1
+          fi
+          nested=$(grep -rnE "${key}" .github/actions/setup-hermetic || true)
+          if [ -n "${other}${nested}" ]; then
+            echo "::error::a release is built with no cache: release.yaml may use the listed actions alone, and setup-hermetic none; found:"
+            printf '%s\n' "${other}" "${nested}"
+            exit 1
+          fi
+
+  # Every tool for every platform, cross-built on linux hosts with the pinned
+  # zig, one runner a group of tools, the way a release builds them. The
+  # verify legs build their own platform and run it (`just test`).
   build:
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix:
+        tools: ${{ fromJSON(needs.plan.outputs.groups) }}
+    name: build (${{ matrix.tools }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -42,15 +97,48 @@ jobs:
           persist-credentials: false
       - name: Install hermetic (pinned, verified)
         uses: ./.github/actions/setup-hermetic
-      - name: Build every tool for every platform
-        run: just build
+      # zig compiles its runtime libraries (compiler-rt, each target's libc,
+      # libc++) into its global cache on first use, which is most of a cold
+      # build. That directory alone is kept between runs, one entry a group
+      # and zig version: every source file is still compiled by every run.
+      # The release workflow keeps nothing and restores nothing.
+      - id: zig
+        name: The zig cache's key
+        shell: bash
+        env:
+          TOOLS: ${{ matrix.tools }}
+        run: |
+          {
+            echo "version=$(zig version)"
+            echo "group=${TOOLS// /+}"
+          } >> "$GITHUB_OUTPUT"
+      - id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.LIMEN_BUILD }}/zig/global
+          key: zig-global-${{ runner.os }}-${{ runner.arch }}-${{ steps.zig.outputs.version }}-${{ steps.zig.outputs.group }}
+      - name: Build the group for every platform
+        shell: bash
+        env:
+          TOOLS: ${{ matrix.tools }}
+        run: |
+          read -r -a tools <<< "$TOOLS"
+          just build-group "${tools[@]}"
+      # The default branch only, and only on a miss: an entry a pull request
+      # run saves is restorable by that pull request alone, and a key is
+      # never overwritten.
+      - if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.LIMEN_BUILD }}/zig/global
+          key: ${{ steps.cache.outputs.cache-primary-key }}
 
   # The ONE required status check (defaultRequiredChecks in
   # internal/github/audit.go). Requiring the lanes by name would bake the
   # runner list into every ruleset; this job collapses them to one stable
   # name. A project job joins `needs` and the assertion below.
   gate:
-    needs: [limen, build]
+    needs: [limen, plan, build]
     # always(), and the result asserted explicitly. Without always() a failed
     # or cancelled dependency SKIPS this job instead of failing it, and a
     # skipped required check does not block a merge — branch protection that
@@ -66,8 +154,9 @@ jobs:
           # Via env, never interpolated into the script: the shell sees data,
           # not something the expression layer can rewrite into code.
           LIMEN: ${{ needs.limen.result }}
+          PLAN: ${{ needs.plan.result }}
           BUILD: ${{ needs.build.result }}
         shell: bash
         run: |
-          printf 'limen: %s\nbuild: %s\n' "$LIMEN" "$BUILD"
-          [ "$LIMEN" = "success" ] && [ "$BUILD" = "success" ]
+          printf 'limen: %s\nplan: %s\nbuild: %s\n' "$LIMEN" "$PLAN" "$BUILD"
+          [ "$LIMEN" = "success" ] && [ "$PLAN" = "success" ] && [ "$BUILD" = "success" ]

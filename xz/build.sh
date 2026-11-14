@@ -14,6 +14,8 @@ target=${3:?zig target}
 out=${4:?output directory}
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=scripts/jobs.sh
+. "${here}/../scripts/jobs.sh"
 work="${out}/obj"
 mkdir -p "${work}" "${out}/bin"
 
@@ -88,6 +90,7 @@ xz_tuklib=(
 
 # compile <object prefix> <source dir> <names...> [-- <extra flags...>]: one
 # object per source, named with its directory so equal basenames do not clash.
+# The compilers run side by side; join before linking.
 compile() {
   local prefix=$1 dir=$2
   shift 2
@@ -103,7 +106,7 @@ compile() {
   done
   local name
   for name in "${names[@]}"; do
-    zig cc "${cflags[@]}" ${extra[@]+"${extra[@]}"} -c "${src}/${dir}/${name}.c" \
+    spawn zig cc "${cflags[@]}" ${extra[@]+"${extra[@]}"} -c "${src}/${dir}/${name}.c" \
       -o "${work}/${prefix}-${name//\//-}.o"
   done
 }
@@ -112,6 +115,7 @@ compile liblzma src/liblzma "${liblzma[@]}" -- -DTUKLIB_SYMBOL_PREFIX=lzma_
 compile liblzma src/common "${liblzma_tuklib[@]}" -- -DTUKLIB_SYMBOL_PREFIX=lzma_
 compile xz src/xz "${xz[@]}"
 compile xz src/common "${xz_tuklib[@]}"
+join
 
 zig cc -target "${target}" -o "${out}/bin/xz${exe}" \
   "${work}"/liblzma-*.o "${work}"/xz-*.o ${libs[@]+"${libs[@]}"}
