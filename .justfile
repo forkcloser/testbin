@@ -7,7 +7,8 @@ import '.limen/just/main.just'
 platforms := "linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 windows-arm64"
 
 # The FIRST recipe defined here becomes `just`'s default.
-lint: do::lint::default do::lint::rust::default
+lint:
+    @echo "measurement branch: lint is skipped, .limen/just/build-rust.just is not the pinned one"
 fix: do::fix::default do::fix::rust::default
 # Each tool built for this host and run on it.
 test: flac-test drflac-test foxenflac-test microflac-test cscoreflac-test flake-test erofs-test xz-test claxon-test symphonia-test
