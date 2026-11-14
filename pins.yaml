@@ -107,7 +107,7 @@ pins:
   # registries the policy authorizes carry no .NET SDK).
   - name: dotnet-sdk-linux-amd64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.403
+    version: 10.0.404
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-linux-x64.tar.gz
     verify: download
     digest:
@@ -115,7 +115,7 @@ pins:
       sha256: cd7224fe8e8ba57c15f1601439ff8785a1a72b54ae5c89dd5302a32dcfbddf18
   - name: dotnet-sdk-linux-arm64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.403
+    version: 10.0.404
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-linux-arm64.tar.gz
     verify: download
     digest:
@@ -123,7 +123,7 @@ pins:
       sha256: 21fe1a0963984206bfaeb19968da07e7a61d30c9bc4621b7372a762a30c88679
   - name: dotnet-sdk-darwin-arm64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.403
+    version: 10.0.404
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-osx-arm64.tar.gz
     verify: download
     digest:
@@ -131,7 +131,7 @@ pins:
       sha256: 826d7ff91fa83b16bccd7edd7822581fe32b5228a4501aabe61d864168129d73
   - name: dotnet-sdk-windows-amd64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.403
+    version: 10.0.404
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-win-x64.zip
     verify: download
     digest:
@@ -139,7 +139,7 @@ pins:
       sha256: f398979a9cac2dba760771c4e01f16e431dcd6bcfb2213e3e8f5b3d354095cc0
   - name: dotnet-sdk-windows-arm64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.403
+    version: 10.0.404
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-win-arm64.zip
     verify: download
     digest:
