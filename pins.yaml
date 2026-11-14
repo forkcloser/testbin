@@ -107,41 +107,41 @@ pins:
   # registries the policy authorizes carry no .NET SDK).
   - name: dotnet-sdk-linux-amd64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.403
+    version: 10.0.404
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-linux-x64.tar.gz
     verify: download
     digest:
-      version: 10.0.403
-      sha256: cd7224fe8e8ba57c15f1601439ff8785a1a72b54ae5c89dd5302a32dcfbddf18
+      version: 10.0.404
+      sha256: c0610757a818fde4b960d27a0ac421f273068a05dc5ec7abafc01dbf84e9cb4d
   - name: dotnet-sdk-linux-arm64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.403
+    version: 10.0.404
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-linux-arm64.tar.gz
     verify: download
     digest:
-      version: 10.0.403
-      sha256: 21fe1a0963984206bfaeb19968da07e7a61d30c9bc4621b7372a762a30c88679
+      version: 10.0.404
+      sha256: dcc820a4277ab6bb3f648c609d86f2a7912ba9a3d166545e7b95dff419c12f0f
   - name: dotnet-sdk-darwin-arm64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.403
+    version: 10.0.404
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-osx-arm64.tar.gz
     verify: download
     digest:
-      version: 10.0.403
-      sha256: 826d7ff91fa83b16bccd7edd7822581fe32b5228a4501aabe61d864168129d73
+      version: 10.0.404
+      sha256: acf7ebe726a030fa3d2bd03b06196971bd9ef123c579b9345d380bc0ef0d4e44
   - name: dotnet-sdk-windows-amd64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.403
+    version: 10.0.404
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-win-x64.zip
     verify: download
     digest:
-      version: 10.0.403
-      sha256: f398979a9cac2dba760771c4e01f16e431dcd6bcfb2213e3e8f5b3d354095cc0
+      version: 10.0.404
+      sha256: f94f02eb8451605a893164bbd9c14e7f00ac8914c370c322822e6ac91b106bcc
   - name: dotnet-sdk-windows-arm64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.403
+    version: 10.0.404
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-win-arm64.zip
     verify: download
     digest:
-      version: 10.0.403
-      sha256: c8d5a6714ae9561c2c41f00325a8f9b34f80f520263059921a36a141cddf2ca8
+      version: 10.0.404
+      sha256: 006bdf067957196a6ffea8640b645aaacbcfeba5ad094d90c8c6900a9dfe9ff4
