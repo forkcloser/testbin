@@ -1,7 +1,7 @@
 # The Rust toolchain the Rust tools build with (limen's book/rust.md): an exact
 # release, the lint lanes' components, and every target `just build` makes.
 [toolchain]
-channel = "1.99.1"
+channel = "1.100.0"
 profile = "minimal"
 components = ["clippy", "rustfmt"]
 targets = [
