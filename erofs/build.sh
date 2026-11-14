@@ -16,6 +16,8 @@ target=${4:?zig target}
 out=${5:?output directory}
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=scripts/jobs.sh
+. "${here}/../scripts/jobs.sh"
 work="${out}/obj"
 mkdir -p "${work}" "${out}/bin"
 
@@ -68,15 +70,17 @@ case "${target}" in
 *-linux-*) lib+=(backends/nbd) ;;
 esac
 
+# The compilers run side by side; join before linking.
 for name in "${lib[@]}"; do
-  zig cc "${cflags[@]}" -c "${src}/lib/${name}.c" -o "${work}/lib-${name//\//-}.o"
+  spawn zig cc "${cflags[@]}" -c "${src}/lib/${name}.c" -o "${work}/lib-${name//\//-}.o"
 done
 # lz4's own build compiles the library at -O3.
 for name in lz4 lz4hc; do
-  zig cc -target "${target}" -O3 -c "${lz4}/lib/${name}.c" -o "${work}/lz4-${name}.o"
+  spawn zig cc -target "${target}" -O3 -c "${lz4}/lib/${name}.c" -o "${work}/lz4-${name}.o"
 done
 
-zig cc "${cflags[@]}" -c "${src}/mkfs/main.c" -o "${work}/mkfs.o"
+spawn zig cc "${cflags[@]}" -c "${src}/mkfs/main.c" -o "${work}/mkfs.o"
+join
 zig cc -target "${target}" -o "${out}/bin/mkfs.erofs${exe}" \
   "${work}/mkfs.o" "${work}"/lib-*.o "${work}"/lz4-*.o ${libs[@]+"${libs[@]}"}
 
