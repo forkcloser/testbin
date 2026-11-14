@@ -20,11 +20,11 @@
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     <!-- The one NuGet package a publish restores (Microsoft.NET.ILLink.Tasks)
          is pinned by its sha512 in packages.lock.json, restored in locked mode
-         unless CscoreLocked=false (`just cscoreflac-lock`); the six runtime
+         unless CscoreLocked=false (`just cscoreflac-lock`); the five runtime
          identifiers are restored together, so one lock serves every platform. -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RestoreLockedMode Condition="'$(CscoreLocked)' == 'true'">true</RestoreLockedMode>
-    <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64;win-x64;win-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>linux-x64;linux-arm64;osx-arm64;win-x64;win-arm64</RuntimeIdentifiers>
     <!-- Upstream's files, compiled as they are: their obsolete-API and CLS
          warnings are upstream's (WebClient, Exception.GetObjectData). -->
     <NoWarn>$(NoWarn);SYSLIB0014;SYSLIB0051;CS0672;CS3021</NoWarn>

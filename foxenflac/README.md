@@ -2,7 +2,7 @@
 
 A FLAC decoder on [libfoxenflac](https://github.com/astoeckel/libfoxenflac) (one C file, no
 dynamic allocation in the decoder), from the commit `pins.yaml` pins (sha256), built with the
-pinned zig for linux, darwin and windows, amd64 and arm64. libfoxenflac publishes no release, so
+pinned zig for linux and windows, amd64 and arm64, and darwin arm64. libfoxenflac publishes no release, so
 the pin is a commit. Renovate moves a commit only as a branch plus a digest, which limen's
 `pins.yaml` manager does not capture, so a bump is a hand edit of `version` and `digest.version`.
 

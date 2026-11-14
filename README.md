@@ -30,7 +30,7 @@ sources, and states the upstream licence its sources, patches and binaries are u
 - **One host builds every platform.** The C toolchain is zig (`zig cc`), pinned in
   `.hermetic/hermetic.yaml`, and the Rust tools link through it (limen's Rust lanes, the
   toolchain pinned by `rust-toolchain.toml`), with the target always explicit: linux (static,
-  musl), darwin and windows, amd64 and arm64, cross-compiled from any of them. No runner
+  musl) and windows, amd64 and arm64, and darwin arm64, cross-compiled from any of them. No runner
   package manager, no container.
 - **Third-party source only.** Everything here builds an upstream project's own sources,
   patched only where a platform needs it (`erofs/patches`, for windows); a library that ships
@@ -38,7 +38,7 @@ sources, and states the upstream licence its sources, patches and binaries are u
   `microflac`, `claxon`, `symphonia`). A tool that wraps an operating system's API has no
   third-party source to build and lives with the repository that uses it.
 - **Every binary runs where it ships.** CI builds each platform and runs it on that platform's
-  runner (`just test`); the release workflow runs the published archives themselves on all six
+  runner (`just test`); the release workflow runs the published archives themselves on all five
   platforms before attaching them.
 
 ## Using a build

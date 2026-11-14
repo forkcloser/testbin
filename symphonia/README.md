@@ -3,8 +3,8 @@
 A FLAC decoder on [Symphonia](https://github.com/pdeljanov/Symphonia) (pure Rust), its FLAC
 support alone (`default-features = false`, `features = ["flac"]`), from the crate version
 `Cargo.toml` pins and `Cargo.lock` locks by checksum with every crate it links, built with the
-Rust toolchain `rust-toolchain.toml` pins, linked through the pinned zig, for linux, darwin and
-windows, amd64 and arm64.
+Rust toolchain `rust-toolchain.toml` pins, linked through the pinned zig, for linux and windows,
+amd64 and arm64, and darwin arm64.
 
 ```sh
 symphonia <input.flac> <output.raw>

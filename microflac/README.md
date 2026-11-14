@@ -2,8 +2,8 @@
 
 A FLAC decoder on [microFLAC](https://github.com/esphome-libs/micro-flac) (C++, ESPHome's FLAC
 decoder, its decoder based on Project Nayuki's Simple FLAC Implementation), from the release tag
-`pins.yaml` pins (`v<version>`, sha256), built with the pinned zig for linux, darwin and
-windows, amd64 and arm64. The build leaves out microFLAC's Ogg demuxer (`MICRO_FLAC_DISABLE_OGG`):
+`pins.yaml` pins (`v<version>`, sha256), built with the pinned zig for linux and windows,
+amd64 and arm64, and darwin arm64. The build leaves out microFLAC's Ogg demuxer (`MICRO_FLAC_DISABLE_OGG`):
 it is a git submodule the release tarball does not carry, and native FLAC is what the tool
 decodes. The encoder's sources are not built.
 

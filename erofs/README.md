@@ -2,7 +2,7 @@
 
 `mkfs.erofs`, from [erofs-utils](https://github.com/erofs/erofs-utils)' release tag `pins.yaml`
 pins (`v<version>`, sha256), linking [lz4](https://github.com/lz4/lz4) from its pinned tag,
-built with the pinned zig for linux, darwin and windows, amd64 and arm64; `fsck.erofs` beside it
+built with the pinned zig for linux and windows, amd64 and arm64, and darwin arm64; `fsck.erofs` beside it
 on linux and darwin, where it builds.
 
 The build is configured as forkcloser/erofs's image-backed tests need it: lz4 and lz4hc, the
