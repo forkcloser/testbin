@@ -12,6 +12,7 @@ pins:
     verify: download
     digest:
       version: 1.5.0
+      source: 43995e37e09119c63196b82ea1555a8eee2fad723ec21392c858579a30de2939
       sha256: f2c1c76592a82ffff8413ba3c4a1299b6c7ab06c734dee03fd88630485c2b920
   # dr_libs tags each library's releases (flac-X.Y.Z); the archive is GitHub's
   # tarball of that tag. dr_flac is public domain or MIT-0, its choice.
@@ -23,6 +24,7 @@ pins:
     verify: download
     digest:
       version: 0.13.4
+      source: ba4035b671d6891518cbf7b99eeeb418bca94a646e7528e4706f2c792f69e069
       sha256: bb1ba8d206d8bf2c2fb20d93f4ca4c592d4cbf4621fd7a7711529699c3298d14
   # libfoxenflac publishes no release: the pin is a commit, the archive GitHub's
   # tarball of it. Renovate moves a commit through git-refs only as a branch
@@ -35,6 +37,7 @@ pins:
     verify: download
     digest:
       version: e491d2ec76709975f09d1820367a92a1772ccfb1
+      source: 9b18b0e26e3f7242bcb514b2588d0822cbb7f6618a07d5fbd63d0c9e17bebd9d
       sha256: 305f7a33ffceb9101c0f3a5420597da5bd60e26b027278efcffbf7a278629227
   # microFLAC's release tag (ESPHome's FLAC decoder); the archive is GitHub's
   # tarball of the tag.
@@ -46,6 +49,7 @@ pins:
     verify: download
     digest:
       version: 0.3.0
+      source: fbb7bfe8e4755ebe6ddc51b01508786827ea0572ea6e513ef10695b4a648ee1f
       sha256: ac2c7a8ef05485b36f50468b056ec93ffb2503632b18b64a8966d0feb1c13337
   # CUETools' release tag; its Flake encoder is built from the tag tarball.
   - name: cuetools
@@ -56,6 +60,7 @@ pins:
     verify: download
     digest:
       version: 2.2.6
+      source: 38f984a832984a299d9a59564c4412efebb2ece1bdf4f4a5c9ca081c8990fadf
       sha256: e263bac9f8d6cab35997cd6f04210cad2ea748e55bebc00e69a35b84a2ddec5f
   # erofs-utils' release tag; mkfs.erofs is built from the tag tarball,
   # patched with erofs/patches.
@@ -67,6 +72,7 @@ pins:
     verify: download
     digest:
       version: 1.9.4
+      source: b46de977b631aa7db1f10e60c46d2b9bae9fb83320eb543a89fff6aa63974763
       sha256: 7d135aa2550326a5acf20f53c518aea5a8900015ce50700044e40f818c31dd80
   # lz4's release tag: the compressor library mkfs.erofs links.
   - name: lz4
@@ -77,6 +83,7 @@ pins:
     verify: download
     digest:
       version: 1.11.1
+      source: 3d79e491d1520c1511726a815e95c933e1d76a07ca7ea04cb23c3cea2a68c1e9
       sha256: 683fed08a844ad012196381e40badf80c0bbe4962959761416d41c9e67d77ec7
   # XZ Utils' release tarball, held to the signature upstream publishes
   # beside it: Lasse Collin's key, by the fingerprint the project gives at
@@ -90,6 +97,7 @@ pins:
     verify: pgp-detached https://github.com/tukaani-project/xz/releases/download/v${version}/xz-${version}.tar.xz.sig https://tukaani.org/misc/lasse_collin_pubkey.txt 3690C240CE51B4670D30AD1C38EE757D69184620
     digest:
       version: 5.8.4
+      source: 904c37b2e9567231d562ae570882d6d5d4de14c216c67d4ef1cc78d95d397926
       sha256: 4ce24038fd4221e0d13bc1a2de7a4db56e90b92b3bf75321f6c14be73f65de4b
   # CSCore's last release tag; its FLAC decoder is compiled from the tag
   # tarball into cscoreflac, the rest of the library left out.
@@ -101,6 +109,7 @@ pins:
     verify: download
     digest:
       version: 1.2.1.2
+      source: ef361010fc7dad05aab835d255b68f60ab83a5e6e1f7bb199531b06ff69532d4
       sha256: a37a882114964e28ef91362c130565d6a5367172eb1283164ae620e939a14f62
   # The .NET SDK that builds CUETools, one archive per platform a build or a
   # test runs on (the toolchain is a pinned archive, not a registry tool: the
@@ -112,6 +121,7 @@ pins:
     verify: download
     digest:
       version: 10.0.403
+      source: d177007f896fc8e038fd3b7114476e0212a66715abe924ec45e4c9aca8475194
       sha256: cd7224fe8e8ba57c15f1601439ff8785a1a72b54ae5c89dd5302a32dcfbddf18
   - name: dotnet-sdk-linux-arm64
     renovate: dotnet-version dotnet-sdk
@@ -120,6 +130,7 @@ pins:
     verify: download
     digest:
       version: 10.0.403
+      source: 59850aa4f7fe6ba2499cf81bb3b8b82479449938269ed1fab6df102c786392e8
       sha256: 21fe1a0963984206bfaeb19968da07e7a61d30c9bc4621b7372a762a30c88679
   - name: dotnet-sdk-darwin-arm64
     renovate: dotnet-version dotnet-sdk
@@ -128,6 +139,7 @@ pins:
     verify: download
     digest:
       version: 10.0.403
+      source: 247864f019f879abeb9212e1c9458c2baa53d3a88b122fc433b251df0a45ca95
       sha256: 826d7ff91fa83b16bccd7edd7822581fe32b5228a4501aabe61d864168129d73
   - name: dotnet-sdk-windows-amd64
     renovate: dotnet-version dotnet-sdk
@@ -136,6 +148,7 @@ pins:
     verify: download
     digest:
       version: 10.0.403
+      source: 4c114927079982c1c78bd2b12444ec3307ffe7329d42c5e2f1aa079c82708dc7
       sha256: f398979a9cac2dba760771c4e01f16e431dcd6bcfb2213e3e8f5b3d354095cc0
   - name: dotnet-sdk-windows-arm64
     renovate: dotnet-version dotnet-sdk
@@ -144,4 +157,5 @@ pins:
     verify: download
     digest:
       version: 10.0.403
+      source: 4071d91ce825176bffc5cb68fd860133f6a45d96f6b57dc7ba00ba373e56fa98
       sha256: c8d5a6714ae9561c2c41f00325a8f9b34f80f520263059921a36a141cddf2ca8
