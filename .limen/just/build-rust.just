@@ -67,14 +67,34 @@ targets +triples: (_banner "build rust" "targets")
     host="$(rustc -vV | sed -n 's/^host: //p')"
     host_linker_var="CARGO_TARGET_$(printf '%s' "$host" | tr 'a-z-' 'A-Z_')_LINKER"
     host_linker="${!host_linker_var:-}"
+    # zig links its own libunwind for a library asked for by name, and for
+    # the windows-gnullvm targets rustc stopped naming it: it hands the
+    # driver `--unwindlib=libunwind`, which zig cc does not act on and
+    # cargo-zigbuild does not translate, and the link ends on undefined
+    # _Unwind_* symbols (book/upstream.md). Named here, in the one place
+    # cargo will read flags from: the encoded ones shadow RUSTFLAGS, which
+    # shadows the target's own.
+    unwind="-Clink-arg=-lunwind"
     for triple in "$@"; do
         echo "→ target/$triple/release"
-        if [ "$triple" = "$host" ] && [ -n "$host_linker" ]; then
-            (
+        # A subshell a triple: what one target needs does not reach the next.
+        (
+            case "$triple" in
+                *-windows-gnullvm)
+                    flags_var="CARGO_TARGET_$(printf '%s' "$triple" | tr 'a-z-' 'A-Z_')_RUSTFLAGS"
+                    if [ -n "${CARGO_ENCODED_RUSTFLAGS:-}" ]; then
+                        export CARGO_ENCODED_RUSTFLAGS="${CARGO_ENCODED_RUSTFLAGS}"$'\x1f'"${unwind}"
+                    elif [ -n "${RUSTFLAGS:-}" ]; then
+                        export RUSTFLAGS="${RUSTFLAGS} ${unwind}"
+                    else
+                        export "${flags_var}=${!flags_var:-} ${unwind}"
+                    fi
+                    ;;
+            esac
+            if [ "$triple" = "$host" ] && [ -n "$host_linker" ]; then
                 unset "$host_linker_var"
-                CARGO_UNSTABLE_HOST_CONFIG=true CARGO_HOST_LINKER="$host_linker" cargo zigbuild --release --locked --target "$triple"
-            )
-        else
+                export CARGO_UNSTABLE_HOST_CONFIG=true CARGO_HOST_LINKER="$host_linker"
+            fi
             cargo zigbuild --release --locked --target "$triple"
-        fi
+        )
     done
