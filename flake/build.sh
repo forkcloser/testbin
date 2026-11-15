@@ -31,6 +31,8 @@ cp "${here}/Directory.Build.props" "${src}/"
 
 # One in-process MSBuild node, no build servers: nothing outlives the build,
 # and the build needs no inter-process pipes.
+# The comma between PathMap's two mappings is written %2C: MSBuild's command
+# line starts another property at a comma.
 dotnet=${DOTNET_ROOT:?the pinned .NET SDK}/dotnet
 (cd "${src}" && "${dotnet}" publish CUETools.Flake/CUETools.Flake.csproj \
   -c Release -f net10.0 -r "${rid}" --self-contained \
