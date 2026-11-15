@@ -3,6 +3,10 @@
 # The import must be kept: it mounts every shared limen task under `just do ...`.
 import '.limen/just/main.just'
 
+# The time every archive entry gets (scripts/archive.sh): the commit's, so
+# that two builds of one commit record the same. No binary records a time.
+export SOURCE_DATE_EPOCH := env("SOURCE_DATE_EPOCH", `git log -1 --format=%ct 2> /dev/null || echo 0`)
+
 # Every target a tool is built for, as os-arch; `just build` builds them all.
 platforms := "linux-amd64 linux-arm64 darwin-arm64 windows-amd64 windows-arm64"
 
@@ -66,8 +70,7 @@ flac +targets: (_fetch "flac")
         mkdir -p "${stage}"
         cp "${out}/bin/flac${x}" "${out}/bin/metaflac${x}" "${stage}/"
         cp "${src}/COPYING.GPL" "${src}/COPYING.LGPL" "${src}/COPYING.Xiph" "${src}/AUTHORS" "${stage}/"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build flac and metaflac for this host and run the round trip on them.
@@ -102,8 +105,7 @@ drflac +targets: (_fetch "drflac")
         cp "${out}/bin/drflac${x}" "${stage}/"
         cp "${src}/LICENSE" "${stage}/LICENSE.dr_libs"
         cp LICENSE "${stage}/LICENSE"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build drflac for this host and decode flac's encodings of arbitrary PCM with it.
@@ -138,8 +140,7 @@ foxenflac +targets: (_fetch "foxenflac")
         cp "${out}/bin/foxenflac${x}" "${stage}/"
         cp "${src}/LICENSE" "${stage}/LICENSE.libfoxenflac"
         cp LICENSE "${stage}/LICENSE"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build foxenflac for this host and decode flac's encodings of arbitrary PCM
@@ -175,8 +176,7 @@ microflac +targets: (_fetch "microflac")
         cp "${out}/bin/microflac${x}" "${stage}/"
         cp "${src}/LICENSE" "${stage}/LICENSE.microflac"
         cp LICENSE "${stage}/LICENSE"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build microflac for this host and decode flac's encodings of arbitrary PCM
@@ -214,8 +214,7 @@ flake +targets: (_fetch "cuetools")
         cp "${src}/CUETools.Codecs/License.txt" "${stage}/License.CUETools.Codecs.txt"
         cp "${src}/CUETools.Codecs.Flake/COPYING" "${stage}/COPYING"
         cp "${LIMEN_BUILD}/nuget/newtonsoft.json/13.0.3/LICENSE.md" "${stage}/LICENSE.Newtonsoft.Json.md"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Publish CUETools.Flake for this host and round-trip arbitrary PCM through it
@@ -255,8 +254,7 @@ erofs +targets: (_fetch "erofs-utils") (_fetch "lz4")
         cp "${src}/COPYING" "${stage}/"
         cp "${src}/LICENSES/GPL-2.0" "${src}/LICENSES/MIT" "${stage}/LICENSES/"
         cp "${lz4}/lib/LICENSE" "${stage}/LICENSE.lz4"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build mkfs.erofs (and fsck.erofs where it builds) for this host and run the
@@ -291,8 +289,7 @@ xz +targets: (_fetch "xz")
         mkdir -p "${stage}"
         cp "${out}/bin/xz${x}" "${stage}/"
         cp "${src}/COPYING" "${src}/COPYING.0BSD" "${src}/AUTHORS" "${stage}/"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build xz for this host and run the round trips on it.
@@ -329,8 +326,7 @@ claxon +targets:
         cp "target/$(just _rust-target "${platform}")/release/claxon${x}" "${stage}/"
         cp "${licence}" "${stage}/LICENSE.claxon"
         cp LICENSE "${stage}/LICENSE"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build claxon for this host and decode flac's encodings of arbitrary PCM with it.
@@ -376,8 +372,7 @@ symphonia +targets:
             done
             [ -n "${found}" ] || { echo "${crate}: no licence file in ${dir}" >&2; exit 1; }
         done
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build symphonia for this host and decode flac's encodings of arbitrary PCM
@@ -414,8 +409,7 @@ cscoreflac +targets: (_fetch "cscore")
         cp "${out}/cscoreflac${x}" "${stage}/"
         cp "${src}/license.md" "${stage}/LICENSE.cscore.md"
         cp LICENSE "${stage}/LICENSE"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Publish cscoreflac for this host and decode flac's encodings of arbitrary PCM
