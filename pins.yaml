@@ -99,6 +99,34 @@ pins:
       version: 5.8.4
       source: 904c37b2e9567231d562ae570882d6d5d4de14c216c67d4ef1cc78d95d397926
       sha256: 4ce24038fd4221e0d13bc1a2de7a4db56e90b92b3bf75321f6c14be73f65de4b
+  # Graphviz's release tarball, from the project's own package registry on
+  # GitLab, the one its download page links. It publishes a sha256 beside
+  # the tarball and signs nothing: TLS is the whole guarantee. The tarball
+  # ships the generated parsers, so the build needs no bison or flex.
+  - name: graphviz
+    renovate: gitlab-releases graphviz/graphviz
+    version: 16.1.1
+    url: https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/${version}/graphviz-${version}.tar.gz
+    verify: download
+    digest:
+      version: 16.1.1
+      source: 41754a6fbcef7c94418e7385c7e8b6cd6babf76486ff7e49b0d27c7b5680af2f
+      sha256: 42806c79271e286028b9422c7016b0368ad86beb381aa46d1d8c720f69ce3fc7
+  # expat, which dot parses HTML-like labels with. The release tarball, the
+  # one libexpat signs, not the tag's archive. Sebastian Pipping, who
+  # publishes the releases, signs them with the signing subkey of his key
+  # 3176EF7DB2367F1FCA4F306B1F9B0E909AF37285, the key of his GitHub account;
+  # the fingerprint here is the subkey's, which is the key that signs.
+  - name: expat
+    renovate: github-tags libexpat/libexpat
+    versioning: regex:^R_(?<major>\d+)_(?<minor>\d+)_(?<patch>\d+)$
+    version: R_2_10_0
+    url: https://github.com/libexpat/libexpat/releases/download/${version}/expat-${major}.${minor}.${patch}.tar.gz
+    verify: pgp-detached https://github.com/libexpat/libexpat/releases/download/${version}/expat-${major}.${minor}.${patch}.tar.gz.asc https://github.com/hartwork.gpg CB8DE70A90CFBF6C3BF5CC5696262ACFFBD3AEC6
+    digest:
+      version: R_2_10_0
+      source: 6829130ac4fc17b95e20e1b74f3653ec572205e2cd357f51b8ddc16fd13a1695
+      sha256: 5466a341f9c692ef7a958a6881311be597f8e1ce345984cf78414f54793dea4c
   # CSCore's last release tag; its FLAC decoder is compiled from the tag
   # tarball into cscoreflac, the rest of the library left out.
   - name: cscore

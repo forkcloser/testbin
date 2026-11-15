@@ -14,13 +14,13 @@ platforms := "linux-amd64 linux-arm64 darwin-arm64 windows-amd64 windows-arm64"
 # side, one runner a group, `|` between groups. The tools of a group share a
 # toolchain to fetch (the .NET SDK, the Rust toolchain) or are too small for
 # a runner of their own. A tool missing here is built by nothing.
-build_groups := "flac|microflac|xz|erofs|drflac foxenflac|flake cscoreflac|claxon symphonia"
+build_groups := "flac|microflac|xz|erofs|graphviz|drflac foxenflac|flake cscoreflac|claxon symphonia"
 
 # The FIRST recipe defined here becomes `just`'s default.
 lint: do::lint::default do::lint::rust::default do::lint::converge
 fix: do::fix::default do::fix::rust::default
 # Each tool built for this host and run on it.
-test: flac-test drflac-test foxenflac-test microflac-test cscoreflac-test flake-test erofs-test xz-test claxon-test symphonia-test
+test: flac-test drflac-test foxenflac-test microflac-test cscoreflac-test flake-test erofs-test xz-test graphviz-test claxon-test symphonia-test
 security: do::security::default
 
 # Build every tool for every platform into $LIMEN_BUILD/dist.
@@ -331,6 +331,51 @@ xz-test:
     just xz "${platform}"
     xz/smoke.sh "${LIMEN_BUILD}/xz/${platform}/bin"
 
+# Build dot (Graphviz, its layout engines and core renderers, expat linked in)
+# for the given platforms, archived with Graphviz's and expat's licence
+# notices, and those of the two pieces of Graphviz under terms of their own,
+# into $LIMEN_BUILD/dist/graphviz-<platform>.tar.gz.
+graphviz +targets: (_fetch "graphviz") (_fetch "expat")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export ZIG_GLOBAL_CACHE_DIR="${LIMEN_BUILD}/zig/global" ZIG_LOCAL_CACHE_DIR="${LIMEN_BUILD}/zig/local"
+    version=$(limen pins get graphviz version)
+    src="${LIMEN_BUILD}/src/graphviz-${version}"
+    # expat's tag is R_2_10_0, its release 2.10.0.
+    expat_tag=$(limen pins get expat version)
+    expat="${LIMEN_BUILD}/src/expat-${expat_tag}"
+    expat_version=${expat_tag#R_}
+    expat_version=${expat_version//_/.}
+    mkdir -p "${LIMEN_BUILD}/dist"
+    set -- {{ targets }}
+    for platform in "$@"; do
+        out="${LIMEN_BUILD}/graphviz/${platform}"
+        rm -rf "${out}"
+        graphviz/build.sh "${src}" "${expat}" "${version}" "${expat_version}" "$(just _zig-target "${platform}")" "${out}"
+        x=""
+        case "${platform}" in windows-*) x=".exe" ;; esac
+        name="graphviz-${platform}"
+        stage="${LIMEN_BUILD}/stage/${name}"
+        rm -rf "${stage}"
+        mkdir -p "${stage}"
+        cp "${out}/bin/dot${x}" "${stage}/"
+        cp "${src}/COPYING" "${src}/cpl1.0.txt" "${src}/AUTHORS" "${stage}/"
+        cp "${expat}/COPYING" "${stage}/COPYING.expat"
+        graphviz/notices.sh "${src}" "${stage}"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
+    done
+
+# Build dot for this host, and require it to name the pinned Graphviz, to write
+# a graph back in canonical form and to lay it out; then once more as the
+# release workflow asks, which has no pin to name.
+graphviz-test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    just graphviz "${platform}"
+    graphviz/smoke.sh "${LIMEN_BUILD}/graphviz/${platform}/bin" "$(limen pins get graphviz version)"
+    graphviz/smoke.sh "${LIMEN_BUILD}/graphviz/${platform}/bin"
+
 # Build claxon (a FLAC decoder on the Claxon crate) for the given platforms
 # through limen's Rust lane, archived with Claxon's licence and this
 # repository's (src/main.rs is ours) into
@@ -568,6 +613,8 @@ release-notes:
     echo "  headers (windows) at this release's tag"
     echo "- lz4 $(limen pins get lz4 version): $(limen pins get lz4 url)"
     echo "- XZ Utils $(limen pins get xz version): $(limen pins get xz url)"
+    echo "- Graphviz $(limen pins get graphviz version): $(limen pins get graphviz url)"
+    echo "- expat $(limen pins get expat version): $(limen pins get expat url)"
     echo "- Claxon $(just _crate-version claxon): https://static.crates.io/crates/claxon/claxon-$(just _crate-version claxon).crate"
     echo "- Symphonia $(just _crate-version symphonia) and the crates it links, each from crates.io at the version and"
     echo "  checksum Cargo.lock records: $(just _crate-closure testbin-symphonia | tr '\n' ' ')"

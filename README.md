@@ -16,6 +16,7 @@ other uses, or covered by any compatibility promise.
 | [`cscoreflac/`](cscoreflac/) | `cscoreflac`, a FLAC decoder on CSCore's | [filoe/cscore](https://github.com/filoe/cscore) |
 | [`erofs/`](erofs/) | `mkfs.erofs`, `fsck.erofs` (not windows) | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) |
 | [`xz/`](xz/) | `xz` | [tukaani-project/xz](https://github.com/tukaani-project/xz) |
+| [`graphviz/`](graphviz/) | `dot` | [graphviz](https://gitlab.com/graphviz/graphviz), with [expat](https://github.com/libexpat/libexpat) |
 | [`claxon/`](claxon/) | `claxon`, a FLAC decoder on Claxon | [ruuda/claxon](https://github.com/ruuda/claxon) |
 | [`symphonia/`](symphonia/) | `symphonia`, a FLAC decoder on Symphonia | [pdeljanov/Symphonia](https://github.com/pdeljanov/Symphonia) |
 
@@ -73,7 +74,7 @@ notes link it, and the patches a tool's directory applies, at the release's tag.
 just build              # every tool, every platform, into .build/dist
 just build-group xz     # the named tools, every platform (the workflows build one group of tools a runner)
 just rebuild xz         # build them again elsewhere from the commit: the archives are the same bytes
-just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs, xz, claxon, symphonia …)
+just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs, xz, graphviz, claxon, symphonia …)
 just test               # each tool for this host, then run on it
 just converge           # rewrite the NuGet lock files, after a .NET SDK, CSCore or CUETools bump
 ```
