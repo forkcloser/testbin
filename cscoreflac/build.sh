@@ -34,5 +34,7 @@ dotnet=${DOTNET_ROOT:?the pinned .NET SDK}/dotnet
   -p:CscoreLocked="${CSCORE_LOCKED:-true}" \
   -p:RestoreForceEvaluate="${CSCORE_LOCK_UPDATE:-false}" \
   -p:UseSharedCompilation=false \
+  -p:DebugType=none -p:DebugSymbols=false \
+  "-p:PathMap=${src}=cscore%2C${here}=cscoreflac" \
   --disable-build-servers -nodeReuse:false -m:1 \
   -o "${out}"

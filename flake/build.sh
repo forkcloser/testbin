@@ -41,5 +41,7 @@ dotnet=${DOTNET_ROOT:?the pinned .NET SDK}/dotnet
   -p:RestoreForceEvaluate="${FLAKE_LOCK_UPDATE:-false}" \
   -p:CustomAfterMicrosoftCommonTargets="${here}/standalone.targets" \
   -p:UseSharedCompilation=false \
+  -p:DebugType=none -p:DebugSymbols=false \
+  "-p:PathMap=${src}=cuetools%2C${here}=flake" \
   --disable-build-servers -nodeReuse:false -m:1 \
   -o "${out}")
