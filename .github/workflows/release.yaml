@@ -137,17 +137,17 @@ jobs:
           for archive in dist/*-"${PLATFORM}".tar.gz; do
             tar -xzf "${archive}" -C unpacked
           done
-          flac=$(echo unpacked/flac-*-"${PLATFORM}")
+          flac="unpacked/flac-${PLATFORM}"
           bash flac/smoke.sh "${flac}"
-          bash drflac/smoke.sh unpacked/drflac-*-"${PLATFORM}" "${flac}"
-          bash foxenflac/smoke.sh unpacked/foxenflac-*-"${PLATFORM}" "${flac}"
-          bash microflac/smoke.sh unpacked/microflac-*-"${PLATFORM}" "${flac}"
-          bash flake/smoke.sh unpacked/flake-*-"${PLATFORM}" "${flac}"
-          bash cscoreflac/smoke.sh unpacked/cscoreflac-*-"${PLATFORM}" "${flac}"
-          bash erofs/smoke.sh unpacked/erofs-*-"${PLATFORM}"
-          bash xz/smoke.sh unpacked/xz-*-"${PLATFORM}"
-          bash claxon/smoke.sh unpacked/claxon-*-"${PLATFORM}" "${flac}"
-          bash symphonia/smoke.sh unpacked/symphonia-*-"${PLATFORM}" "${flac}"
+          bash drflac/smoke.sh "unpacked/drflac-${PLATFORM}" "${flac}"
+          bash foxenflac/smoke.sh "unpacked/foxenflac-${PLATFORM}" "${flac}"
+          bash microflac/smoke.sh "unpacked/microflac-${PLATFORM}" "${flac}"
+          bash flake/smoke.sh "unpacked/flake-${PLATFORM}" "${flac}"
+          bash cscoreflac/smoke.sh "unpacked/cscoreflac-${PLATFORM}" "${flac}"
+          bash erofs/smoke.sh "unpacked/erofs-${PLATFORM}"
+          bash xz/smoke.sh "unpacked/xz-${PLATFORM}"
+          bash claxon/smoke.sh "unpacked/claxon-${PLATFORM}" "${flac}"
+          bash symphonia/smoke.sh "unpacked/symphonia-${PLATFORM}" "${flac}"
 
   publish:
     # Tag pushes only: a workflow_dispatch run stops after the smoke legs.
