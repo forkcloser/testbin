@@ -61,4 +61,5 @@ just build              # every tool, every platform, into .build/dist
 just build-group xz     # the named tools, every platform (the workflows build one group of tools a runner)
 just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs, xz, claxon, symphonia …)
 just test               # each tool for this host, then run on it
+just converge           # rewrite the NuGet lock files, after a .NET SDK, CSCore or CUETools bump
 ```

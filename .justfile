@@ -13,7 +13,7 @@ platforms := "linux-amd64 linux-arm64 darwin-arm64 windows-amd64 windows-arm64"
 build_groups := "flac|microflac|xz|erofs|drflac foxenflac|flake cscoreflac|claxon symphonia"
 
 # The FIRST recipe defined here becomes `just`'s default.
-lint: do::lint::default do::lint::rust::default
+lint: do::lint::default do::lint::rust::default do::lint::converge
 fix: do::fix::default do::fix::rust::default
 # Each tool built for this host and run on it.
 test: flac-test drflac-test foxenflac-test microflac-test cscoreflac-test flake-test erofs-test xz-test claxon-test symphonia-test
@@ -436,6 +436,7 @@ cscoreflac-lock: (_fetch "cscore")
     version=$(limen pins get cscore version)
     CSCORE_LOCKED=false CSCORE_LOCK_UPDATE=true cscoreflac/build.sh "${LIMEN_BUILD}/src/cscore-${version}" \
         "$(just _dotnet-rid "$(just _host-platform)")" "${LIMEN_BUILD}/cscoreflac/lock"
+    just _lf cscoreflac/packages.lock.json
 
 # Rewrite flake/locks from a publish of this host's platform: after a .NET SDK
 # or a CUETools bump changes what the projects reference.
@@ -446,6 +447,25 @@ flake-lock: (_fetch "cuetools")
     version=$(limen pins get cuetools version)
     FLAKE_LOCKED=false FLAKE_LOCK_UPDATE=true flake/build.sh "${LIMEN_BUILD}/src/cuetools-${version}" \
         "$(just _dotnet-rid "$(just _host-platform)")" "${LIMEN_BUILD}/flake/lock"
+    just _lf flake/locks/*.lock.json
+
+# Rewrite every file .converge declares, the NuGet lock files, from the tree
+# as it stands. The same files whatever host runs it.
+converge: cscoreflac-lock flake-lock
+
+# Strip the carriage returns from the given files: NuGet writes a lock file
+# with its host's line ending, CRLF on Windows, and the tree holds LF. Written
+# back in place, so a file keeps its mode.
+_lf +files:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    tmp=$(mktemp "${TMPDIR:-/tmp}/lf.XXXXXX")
+    trap 'rm -f "${tmp}"' EXIT
+    set -- {{ files }}
+    for file in "$@"; do
+        tr -d '\r' < "${file}" > "${tmp}"
+        cat "${tmp}" > "${file}"
+    done
 
 # The pinned .NET SDK for this host, fetched, verified against pins.yaml and
 # unpacked once; prints the environment that puts it on PATH, for `eval`. Its
