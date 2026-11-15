@@ -16,13 +16,15 @@ out=${4:?output directory}
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=scripts/jobs.sh
 . "${here}/../scripts/jobs.sh"
+# shellcheck source=scripts/reproducible.sh
+. "${here}/../scripts/reproducible.sh"
 work="${out}/obj"
 mkdir -p "${work}" "${out}/bin"
 
 # As upstream's CMake build: the system extensions on every platform (each is
 # inert where it means nothing), 64-bit off_t, NDEBUG, config.h's values.
 cflags=(
-  -target "${target}" -O2 -std=gnu11
+  -target "${target}" -O2 -std=gnu11 "${repro_cflags[@]}"
   -D_GNU_SOURCE -D_DARWIN_C_SOURCE -D_FILE_OFFSET_BITS=64
   -DHAVE_CONFIG_H "-DPACKAGE_VERSION=\"${version}\""
   -I "${here}" -I "${src}/src/common" -I "${src}/src/liblzma/api"
@@ -117,5 +119,5 @@ compile xz src/xz "${xz[@]}"
 compile xz src/common "${xz_tuklib[@]}"
 join
 
-zig cc -target "${target}" -o "${out}/bin/xz${exe}" \
+zig cc -target "${target}" "${repro_ldflags[@]}" -o "${out}/bin/xz${exe}" \
   "${work}"/liblzma-*.o "${work}"/xz-*.o ${libs[@]+"${libs[@]}"}

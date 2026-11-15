@@ -18,6 +18,8 @@ out=${5:?output directory}
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=scripts/jobs.sh
 . "${here}/../scripts/jobs.sh"
+# shellcheck source=scripts/reproducible.sh
+. "${here}/../scripts/reproducible.sh"
 work="${out}/obj"
 mkdir -p "${work}" "${out}/bin"
 
@@ -32,7 +34,7 @@ fi
 # As configure would: lib/ on the include path, NDEBUG (debug is off by
 # default), 64-bit offsets.
 cflags=(
-  -target "${target}" -O2 -std=gnu11
+  -target "${target}" -O2 -std=gnu11 "${repro_cflags[@]}"
   -D_FILE_OFFSET_BITS=64 -DNDEBUG
   -DHAVE_CONFIG_H "-DPACKAGE_VERSION=\"${version}\""
   -I "${here}" -I "${src}/include" -I "${src}/lib" -I "${lz4}/lib"
@@ -76,12 +78,12 @@ for name in "${lib[@]}"; do
 done
 # lz4's own build compiles the library at -O3.
 for name in lz4 lz4hc; do
-  spawn zig cc -target "${target}" -O3 -c "${lz4}/lib/${name}.c" -o "${work}/lz4-${name}.o"
+  spawn zig cc -target "${target}" -O3 "${repro_cflags[@]}" -c "${lz4}/lib/${name}.c" -o "${work}/lz4-${name}.o"
 done
 
 spawn zig cc "${cflags[@]}" -c "${src}/mkfs/main.c" -o "${work}/mkfs.o"
 join
-zig cc -target "${target}" -o "${out}/bin/mkfs.erofs${exe}" \
+zig cc -target "${target}" "${repro_ldflags[@]}" -o "${out}/bin/mkfs.erofs${exe}" \
   "${work}/mkfs.o" "${work}"/lib-*.o "${work}"/lz4-*.o ${libs[@]+"${libs[@]}"}
 
 # fsck.erofs extracts what mkfs.erofs wrote, for the smoke test; it needs more
@@ -90,7 +92,7 @@ case "${target}" in
 *-windows-*) ;;
 *)
   zig cc "${cflags[@]}" -c "${src}/fsck/main.c" -o "${work}/fsck.o"
-  zig cc -target "${target}" -o "${out}/bin/fsck.erofs" \
+  zig cc -target "${target}" "${repro_ldflags[@]}" -o "${out}/bin/fsck.erofs" \
     "${work}/fsck.o" "${work}"/lib-*.o "${work}"/lz4-*.o "${libs[@]}"
   ;;
 esac

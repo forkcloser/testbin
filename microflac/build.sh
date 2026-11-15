@@ -14,6 +14,8 @@ out=${3:?output directory}
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=scripts/jobs.sh
 . "${here}/../scripts/jobs.sh"
+# shellcheck source=scripts/reproducible.sh
+. "${here}/../scripts/reproducible.sh"
 work="${out}/obj"
 mkdir -p "${work}" "${out}/bin"
 
@@ -25,10 +27,10 @@ esac
 # cmake/sources.cmake's decoder sources and the shared ones; the encoder's are
 # left out. The compilers run side by side; join before linking.
 for name in crc frame_header pcm_packing flac_decoder decorrelation lpc; do
-  spawn zig c++ -target "${target}" -O2 -std=c++14 -DMICRO_FLAC_DISABLE_OGG \
+  spawn zig c++ -target "${target}" -O2 -std=c++14 "${repro_cflags[@]}" -DMICRO_FLAC_DISABLE_OGG \
     -I "${src}/include" -I "${src}/src" -c "${src}/src/${name}.cpp" -o "${work}/${name}.o"
 done
-spawn zig c++ -target "${target}" -O2 -std=c++14 -DMICRO_FLAC_DISABLE_OGG \
+spawn zig c++ -target "${target}" -O2 -std=c++14 "${repro_cflags[@]}" -DMICRO_FLAC_DISABLE_OGG \
   -I "${src}/include" -c "${here}/main.cpp" -o "${work}/main.o"
 join
-zig c++ -target "${target}" -o "${out}/bin/microflac${exe}" "${work}"/*.o
+zig c++ -target "${target}" "${repro_ldflags[@]}" -o "${out}/bin/microflac${exe}" "${work}"/*.o
