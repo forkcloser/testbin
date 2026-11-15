@@ -116,46 +116,46 @@ pins:
   # registries the policy authorizes carry no .NET SDK).
   - name: dotnet-sdk-linux-amd64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.404
+    version: 11.0.100
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-linux-x64.tar.gz
     verify: download
     digest:
-      version: 10.0.404
-      source: 8221d683a292cbf6f5371223c67150c097cf2b6e78fb0b6ac5b818c175bbe464
-      sha256: c0610757a818fde4b960d27a0ac421f273068a05dc5ec7abafc01dbf84e9cb4d
+      version: 11.0.100
+      source: 23077e91983c49db9de9c858773201e0b5a864efae91c6e686f272ef5cc6bbbb
+      sha256: 6fdb8822f47ccdba28f507dcd5d92e632d5b99cd27908d6838f0cc575be33baf
   - name: dotnet-sdk-linux-arm64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.404
+    version: 11.0.100
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-linux-arm64.tar.gz
     verify: download
     digest:
-      version: 10.0.404
-      source: 26596cbcca6cd7fd2b3bf6f49259a8244d690623591ea06eb0ef4679acbf92e0
-      sha256: dcc820a4277ab6bb3f648c609d86f2a7912ba9a3d166545e7b95dff419c12f0f
+      version: 11.0.100
+      source: 63c9d2d9002ce8b974bc7e4793df70144f3919e7bd8c5e6e76293207d8e5ba76
+      sha256: 699951697c76af6ba714fbbe9b45372d1f189d00f303a67ba2e90d53acf630b2
   - name: dotnet-sdk-darwin-arm64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.404
+    version: 11.0.100
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-osx-arm64.tar.gz
     verify: download
     digest:
-      version: 10.0.404
-      source: 8ab81133c3b653c9b6b780361ec38596e0bd53e798edcbc288cfa1a7b3e8f1ca
-      sha256: acf7ebe726a030fa3d2bd03b06196971bd9ef123c579b9345d380bc0ef0d4e44
+      version: 11.0.100
+      source: 7b9e99c4893c03b3d7f1c7971f1bd083f26179d790a701df181656ea7f904852
+      sha256: a2e6635ffec544e9a7a98bde44d75bfbc71b2c19b33c3c088774ef2498edf380
   - name: dotnet-sdk-windows-amd64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.404
+    version: 11.0.100
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-win-x64.zip
     verify: download
     digest:
-      version: 10.0.404
-      source: 6787684b80c48a9366bb3c66f5fa95ec2107283fedea5883b176cb92f0739dc6
-      sha256: f94f02eb8451605a893164bbd9c14e7f00ac8914c370c322822e6ac91b106bcc
+      version: 11.0.100
+      source: 36b0d952566bd1ec44f204be07147355ddae21cca6af73e9ed1f5f2b288b0f70
+      sha256: ae800f1fa1a6428e0d7c740bb745d9414f15334118c51e246dab9850b738fadd
   - name: dotnet-sdk-windows-arm64
     renovate: dotnet-version dotnet-sdk
-    version: 10.0.404
+    version: 11.0.100
     url: https://builds.dotnet.microsoft.com/dotnet/Sdk/${version}/dotnet-sdk-${version}-win-arm64.zip
     verify: download
     digest:
-      version: 10.0.404
-      source: c10acc9d3193c0436a5dbd76a01bbb1cb7f2a9d4e65cedac462db38e8c7d034d
-      sha256: 006bdf067957196a6ffea8640b645aaacbcfeba5ad094d90c8c6900a9dfe9ff4
+      version: 11.0.100
+      source: 9fcae146169241cc3a189b61d4b03f71814db0d08906153686f4ef99ac026886
+      sha256: f9a271f91ea25a65f7eb742269b0881f657ff35b2b485016d27e2cc7b27c1969
