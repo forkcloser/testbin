@@ -40,6 +40,15 @@ sources, and states the upstream licence its sources, patches and binaries are u
 - **Every binary runs where it ships.** CI builds each platform and runs it on that platform's
   runner (`just test`); the release workflow runs the published archives themselves on all five
   platforms before attaching them.
+- **A build is its commit's.** Built again from the same commit, in another directory and at
+  another time, every archive is the same bytes, so a published one can be checked by building
+  it: `just build-group <tools>`, then `just rebuild <tools>`, which CI runs for every group.
+  Nothing of the build is recorded. The binaries carry no debug information and no symbols (they
+  name the build's directories); a Rust binary's paths are remapped and a .NET one's mapped; a
+  windows executable's time stamp is a hash of its content; and every archive entry has the
+  commit's time, owner and group 0 with no name, and comes in name order
+  (`scripts/reproducible.sh`, `scripts/archive.sh`). The commit's time is read from git: a
+  build from a source tarball sets `SOURCE_DATE_EPOCH` to it, or its archives are dated 0.
 
 ## Using a build
 
@@ -59,6 +68,7 @@ notes link it, and the patches a tool's directory applies, at the release's tag.
 ```sh
 just build              # every tool, every platform, into .build/dist
 just build-group xz     # the named tools, every platform (the workflows build one group of tools a runner)
+just rebuild xz         # build them again elsewhere from the commit: the archives are the same bytes
 just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs, xz, claxon, symphonia …)
 just test               # each tool for this host, then run on it
 just converge           # rewrite the NuGet lock files, after a .NET SDK, CSCore or CUETools bump

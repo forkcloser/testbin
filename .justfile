@@ -3,6 +3,10 @@
 # The import must be kept: it mounts every shared limen task under `just do ...`.
 import '.limen/just/main.just'
 
+# The time every archive entry gets (scripts/archive.sh): the commit's, so
+# that two builds of one commit record the same. No binary records a time.
+export SOURCE_DATE_EPOCH := env("SOURCE_DATE_EPOCH", `git log -1 --format=%ct 2> /dev/null || echo 0`)
+
 # Every target a tool is built for, as os-arch; `just build` builds them all.
 platforms := "linux-amd64 linux-arm64 darwin-arm64 windows-amd64 windows-arm64"
 
@@ -30,6 +34,37 @@ build-group +tools:
     for tool in "$@"; do
         just "${tool}" {{ platforms }}
     done
+
+# Build the named tools again, from the commit alone, in another directory
+# and with nothing kept from the build here, and hold every archive to the one
+# `just build-group` made of them: the same bytes, or the build is not
+# reproducible. The commit is what is built again, so the tree has to be it.
+rebuild +tools:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+        echo "the tree has changes the commit does not: commit them, the rebuild is of the commit." >&2
+        exit 1
+    fi
+    again="${LIMEN_BUILD}/again/in-another-directory/testbin"
+    rm -rf "${LIMEN_BUILD}/again"
+    mkdir -p "${again}"
+    git archive --format=tar HEAD | tar -xf - -C "${again}"
+    (cd "${again}" && just build-group {{ tools }})
+    failed=0
+    for archive in "${again}"/.build/dist/*.tar.gz; do
+        name=${archive##*/}
+        if [ ! -f "${LIMEN_BUILD}/dist/${name}" ]; then
+            echo "${name}: built again, and not built here: run 'just build-group {{ tools }}' first." >&2
+            failed=1
+        elif ! cmp -s "${archive}" "${LIMEN_BUILD}/dist/${name}"; then
+            echo "${name}: not the same bytes when built again." >&2
+            failed=1
+        else
+            echo "${name}: the same bytes, sha256 $(sha256sum "${archive}" | cut -d' ' -f1)"
+        fi
+    done
+    exit "${failed}"
 
 # build_groups as the JSON array a workflow's matrix reads, one string a group.
 build-matrix:
@@ -66,8 +101,7 @@ flac +targets: (_fetch "flac")
         mkdir -p "${stage}"
         cp "${out}/bin/flac${x}" "${out}/bin/metaflac${x}" "${stage}/"
         cp "${src}/COPYING.GPL" "${src}/COPYING.LGPL" "${src}/COPYING.Xiph" "${src}/AUTHORS" "${stage}/"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build flac and metaflac for this host and run the round trip on them.
@@ -102,8 +136,7 @@ drflac +targets: (_fetch "drflac")
         cp "${out}/bin/drflac${x}" "${stage}/"
         cp "${src}/LICENSE" "${stage}/LICENSE.dr_libs"
         cp LICENSE "${stage}/LICENSE"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build drflac for this host and decode flac's encodings of arbitrary PCM with it.
@@ -138,8 +171,7 @@ foxenflac +targets: (_fetch "foxenflac")
         cp "${out}/bin/foxenflac${x}" "${stage}/"
         cp "${src}/LICENSE" "${stage}/LICENSE.libfoxenflac"
         cp LICENSE "${stage}/LICENSE"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build foxenflac for this host and decode flac's encodings of arbitrary PCM
@@ -175,8 +207,7 @@ microflac +targets: (_fetch "microflac")
         cp "${out}/bin/microflac${x}" "${stage}/"
         cp "${src}/LICENSE" "${stage}/LICENSE.microflac"
         cp LICENSE "${stage}/LICENSE"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build microflac for this host and decode flac's encodings of arbitrary PCM
@@ -214,8 +245,7 @@ flake +targets: (_fetch "cuetools")
         cp "${src}/CUETools.Codecs/License.txt" "${stage}/License.CUETools.Codecs.txt"
         cp "${src}/CUETools.Codecs.Flake/COPYING" "${stage}/COPYING"
         cp "${LIMEN_BUILD}/nuget/newtonsoft.json/13.0.3/LICENSE.md" "${stage}/LICENSE.Newtonsoft.Json.md"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Publish CUETools.Flake for this host and round-trip arbitrary PCM through it
@@ -255,8 +285,7 @@ erofs +targets: (_fetch "erofs-utils") (_fetch "lz4")
         cp "${src}/COPYING" "${stage}/"
         cp "${src}/LICENSES/GPL-2.0" "${src}/LICENSES/MIT" "${stage}/LICENSES/"
         cp "${lz4}/lib/LICENSE" "${stage}/LICENSE.lz4"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build mkfs.erofs (and fsck.erofs where it builds) for this host and run the
@@ -291,8 +320,7 @@ xz +targets: (_fetch "xz")
         mkdir -p "${stage}"
         cp "${out}/bin/xz${x}" "${stage}/"
         cp "${src}/COPYING" "${src}/COPYING.0BSD" "${src}/AUTHORS" "${stage}/"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build xz for this host and run the round trips on it.
@@ -315,6 +343,8 @@ claxon +targets:
     for platform in "$@"; do
         triples+=("$(just _rust-target "${platform}")")
     done
+    CARGO_ENCODED_RUSTFLAGS=$(just _rust-remap)
+    export CARGO_ENCODED_RUSTFLAGS
     just do build rust targets "${triples[@]}"
     version=$(just _crate-version claxon)
     licence=$(echo "${LIMEN_BUILD}"/cargo/registry/src/*/"claxon-${version}/license")
@@ -329,8 +359,7 @@ claxon +targets:
         cp "target/$(just _rust-target "${platform}")/release/claxon${x}" "${stage}/"
         cp "${licence}" "${stage}/LICENSE.claxon"
         cp LICENSE "${stage}/LICENSE"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build claxon for this host and decode flac's encodings of arbitrary PCM with it.
@@ -353,6 +382,8 @@ symphonia +targets:
     for platform in "$@"; do
         triples+=("$(just _rust-target "${platform}")")
     done
+    CARGO_ENCODED_RUSTFLAGS=$(just _rust-remap)
+    export CARGO_ENCODED_RUSTFLAGS
     just do build rust targets "${triples[@]}"
     version=$(just _crate-version symphonia)
     mkdir -p "${LIMEN_BUILD}/dist"
@@ -376,8 +407,7 @@ symphonia +targets:
             done
             [ -n "${found}" ] || { echo "${crate}: no licence file in ${dir}" >&2; exit 1; }
         done
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Build symphonia for this host and decode flac's encodings of arbitrary PCM
@@ -414,8 +444,7 @@ cscoreflac +targets: (_fetch "cscore")
         cp "${out}/cscoreflac${x}" "${stage}/"
         cp "${src}/license.md" "${stage}/LICENSE.cscore.md"
         cp LICENSE "${stage}/LICENSE"
-        (cd "${LIMEN_BUILD}/stage" && tar -czf "${LIMEN_BUILD}/dist/${name}.tar.gz" "${name}")
-        echo "→ ${LIMEN_BUILD}/dist/${name}.tar.gz"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
 # Publish cscoreflac for this host and decode flac's encodings of arbitrary PCM
@@ -571,6 +600,21 @@ _fetch name:
     rm -rf "${dir:?}/{{ name }}-${version}"
     mkdir -p "${dir}/{{ name }}-${version}"
     tar -xf "${archive}" -C "${dir}/{{ name }}-${version}" --strip-components=1
+
+# The rustc flags that keep the build out of a Rust binary, as
+# CARGO_ENCODED_RUSTFLAGS takes them. Its directories: the checkout, cargo's
+# registry and the toolchain are named in panic messages, and every byte
+# after one moves with its length. And its time, the two link arguments
+# scripts/reproducible.sh gives the C tools: zig takes both for every target,
+# and -Brepro changes a windows executable alone. No value begins with a
+# slash: the shell of a windows host rewrites one that does into a path under
+# its own root. Set this way they shadow a build.rustflags of cargo's
+# configuration: there is none.
+_rust-remap:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sep=$'\x1f'
+    printf '%s' "--remap-path-prefix=$(pwd)=testbin${sep}--remap-path-prefix=${LIMEN_BUILD}/cargo=cargo${sep}--remap-path-prefix=${LIMEN_BUILD}/rustup=rustup${sep}-Clink-arg=-s${sep}-Clink-arg=-Wl,-Brepro"
 
 # The Rust target of a platform: musl on linux (static); on windows the GNU ABI
 # for amd64 and its LLVM flavour for arm64, the one Rust ships for it.

@@ -15,6 +15,8 @@ out=${4:?output directory}
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=scripts/jobs.sh
 . "${here}/../scripts/jobs.sh"
+# shellcheck source=scripts/reproducible.sh
+. "${here}/../scripts/reproducible.sh"
 work="${out}/obj"
 mkdir -p "${work}" "${out}/bin"
 
@@ -24,7 +26,7 @@ case "${target}" in
 esac
 
 cflags=(
-  -target "${target}" -O2 -std=gnu99
+  -target "${target}" -O2 -std=gnu99 "${repro_cflags[@]}"
   -DHAVE_CONFIG_H -DFLAC__NO_DLL "-DPACKAGE_VERSION=\"${version}\""
   -I "${here}" -I "${src}/include" -I "${src}/src/libFLAC/include"
 )
@@ -84,7 +86,7 @@ compile flac src/flac "${flac[@]}"
 compile metaflac src/metaflac "${metaflac[@]}"
 join
 
-zig cc -target "${target}" -o "${out}/bin/flac${exe}" \
+zig cc -target "${target}" "${repro_ldflags[@]}" -o "${out}/bin/flac${exe}" \
   "${work}"/libflac-*.o "${work}"/share-*.o "${work}"/flac-*.o -lm
-zig cc -target "${target}" -o "${out}/bin/metaflac${exe}" \
+zig cc -target "${target}" "${repro_ldflags[@]}" -o "${out}/bin/metaflac${exe}" \
   "${work}"/libflac-*.o "${work}"/share-*.o "${work}"/metaflac-*.o -lm

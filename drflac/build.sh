@@ -11,6 +11,8 @@ target=${2:?zig target}
 out=${3:?output directory}
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=scripts/reproducible.sh
+. "${here}/../scripts/reproducible.sh"
 mkdir -p "${out}/bin"
 
 exe=""
@@ -18,5 +20,5 @@ case "${target}" in
 *-windows-*) exe=".exe" ;;
 esac
 
-zig cc -target "${target}" -O2 -std=c99 -I "${src}" \
+zig cc -target "${target}" -O2 -std=c99 "${repro_cflags[@]}" "${repro_ldflags[@]}" -I "${src}" \
   -o "${out}/bin/drflac${exe}" "${here}/main.c" -lm
