@@ -124,6 +124,16 @@ jobs:
         run: |
           read -r -a tools <<< "$TOOLS"
           just build-group "${tools[@]}"
+      # Again from the commit alone, in another directory, with no cache: the
+      # archives are the ones above, byte for byte, as a release's must be for
+      # anyone to check it by building it.
+      - name: Build the group again elsewhere, to the same bytes
+        shell: bash
+        env:
+          TOOLS: ${{ matrix.tools }}
+        run: |
+          read -r -a tools <<< "$TOOLS"
+          just rebuild "${tools[@]}"
       # The default branch only, and only on a miss: an entry a pull request
       # run saves is restorable by that pull request alone, and a key is
       # never overwritten.

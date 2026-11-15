@@ -35,6 +35,37 @@ build-group +tools:
         just "${tool}" {{ platforms }}
     done
 
+# Build the named tools again, from the commit alone, in another directory
+# and with nothing kept from the build here, and hold every archive to the one
+# `just build-group` made of them: the same bytes, or the build is not
+# reproducible. The commit is what is built again, so the tree has to be it.
+rebuild +tools:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+        echo "the tree has changes the commit does not: commit them, the rebuild is of the commit." >&2
+        exit 1
+    fi
+    again="${LIMEN_BUILD}/again/in-another-directory/testbin"
+    rm -rf "${LIMEN_BUILD}/again"
+    mkdir -p "${again}"
+    git archive --format=tar HEAD | tar -xf - -C "${again}"
+    (cd "${again}" && just build-group {{ tools }})
+    failed=0
+    for archive in "${again}"/.build/dist/*.tar.gz; do
+        name=${archive##*/}
+        if [ ! -f "${LIMEN_BUILD}/dist/${name}" ]; then
+            echo "${name}: built again, and not built here: run 'just build-group {{ tools }}' first." >&2
+            failed=1
+        elif ! cmp -s "${archive}" "${LIMEN_BUILD}/dist/${name}"; then
+            echo "${name}: not the same bytes when built again." >&2
+            failed=1
+        else
+            echo "${name}: the same bytes, sha256 $(sha256sum "${archive}" | cut -d' ' -f1)"
+        fi
+    done
+    exit "${failed}"
+
 # build_groups as the JSON array a workflow's matrix reads, one string a group.
 build-matrix:
     #!/usr/bin/env bash
