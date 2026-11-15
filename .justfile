@@ -312,6 +312,8 @@ claxon +targets:
     for platform in "$@"; do
         triples+=("$(just _rust-target "${platform}")")
     done
+    CARGO_ENCODED_RUSTFLAGS=$(just _rust-remap)
+    export CARGO_ENCODED_RUSTFLAGS
     just do build rust targets "${triples[@]}"
     version=$(just _crate-version claxon)
     licence=$(echo "${LIMEN_BUILD}"/cargo/registry/src/*/"claxon-${version}/license")
@@ -349,6 +351,8 @@ symphonia +targets:
     for platform in "$@"; do
         triples+=("$(just _rust-target "${platform}")")
     done
+    CARGO_ENCODED_RUSTFLAGS=$(just _rust-remap)
+    export CARGO_ENCODED_RUSTFLAGS
     just do build rust targets "${triples[@]}"
     version=$(just _crate-version symphonia)
     mkdir -p "${LIMEN_BUILD}/dist"
@@ -565,6 +569,21 @@ _fetch name:
     rm -rf "${dir:?}/{{ name }}-${version}"
     mkdir -p "${dir}/{{ name }}-${version}"
     tar -xf "${archive}" -C "${dir}/{{ name }}-${version}" --strip-components=1
+
+# The rustc flags that keep the build out of a Rust binary, as
+# CARGO_ENCODED_RUSTFLAGS takes them. Its directories: the checkout, cargo's
+# registry and the toolchain are named in panic messages, and every byte
+# after one moves with its length. And its time, the two link arguments
+# scripts/reproducible.sh gives the C tools: zig takes both for every target,
+# and -Brepro changes a windows executable alone. No value begins with a
+# slash: the shell of a windows host rewrites one that does into a path under
+# its own root. Set this way they shadow a build.rustflags of cargo's
+# configuration: there is none.
+_rust-remap:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sep=$'\x1f'
+    printf '%s' "--remap-path-prefix=$(pwd)=testbin${sep}--remap-path-prefix=${LIMEN_BUILD}/cargo=cargo${sep}--remap-path-prefix=${LIMEN_BUILD}/rustup=rustup${sep}-Clink-arg=-s${sep}-Clink-arg=-Wl,-Brepro"
 
 # The Rust target of a platform: musl on linux (static); on windows the GNU ABI
 # for amd64 and its LLVM flavour for arm64, the one Rust ships for it.
