@@ -80,7 +80,7 @@ build-matrix:
     printf ']\n'
 
 # Build flac and metaflac for the given platforms (os-arch), each archived with
-# flac's licence notices into $LIMEN_BUILD/dist/flac-<version>-<platform>.tar.gz.
+# flac's licence notices into $LIMEN_BUILD/dist/flac-<platform>.tar.gz.
 flac +targets: (_fetch "flac")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -95,7 +95,7 @@ flac +targets: (_fetch "flac")
         flac/build.sh "${src}" "${version}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
-        name="flac-${version}-${platform}"
+        name="flac-${platform}"
         stage="${LIMEN_BUILD}/stage/${name}"
         rm -rf "${stage}"
         mkdir -p "${stage}"
@@ -114,7 +114,7 @@ flac-test:
 
 # Build drflac (a FLAC decoder on dr_flac) for the given platforms, archived
 # with dr_libs' licence and this repository's (main.c is ours) into
-# $LIMEN_BUILD/dist/drflac-<version>-<platform>.tar.gz.
+# $LIMEN_BUILD/dist/drflac-<platform>.tar.gz.
 drflac +targets: (_fetch "drflac")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -129,7 +129,7 @@ drflac +targets: (_fetch "drflac")
         drflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
-        name="drflac-${version}-${platform}"
+        name="drflac-${platform}"
         stage="${LIMEN_BUILD}/stage/${name}"
         rm -rf "${stage}"
         mkdir -p "${stage}"
@@ -149,7 +149,7 @@ drflac-test: flac-test
 
 # Build foxenflac (a FLAC decoder on libfoxenflac) for the given platforms,
 # archived with libfoxenflac's licence (LGPL-2.1) and this repository's (main.c
-# is ours) into $LIMEN_BUILD/dist/foxenflac-<commit>-<platform>.tar.gz.
+# is ours) into $LIMEN_BUILD/dist/foxenflac-<platform>.tar.gz.
 foxenflac +targets: (_fetch "foxenflac")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -164,7 +164,7 @@ foxenflac +targets: (_fetch "foxenflac")
         foxenflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
-        name="foxenflac-${version}-${platform}"
+        name="foxenflac-${platform}"
         stage="${LIMEN_BUILD}/stage/${name}"
         rm -rf "${stage}"
         mkdir -p "${stage}"
@@ -185,7 +185,7 @@ foxenflac-test: flac-test
 
 # Build microflac (a FLAC decoder on microFLAC) for the given platforms,
 # archived with microFLAC's licence and this repository's (main.cpp is ours)
-# into $LIMEN_BUILD/dist/microflac-<version>-<platform>.tar.gz.
+# into $LIMEN_BUILD/dist/microflac-<platform>.tar.gz.
 microflac +targets: (_fetch "microflac")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -200,7 +200,7 @@ microflac +targets: (_fetch "microflac")
         microflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
-        name="microflac-${version}-${platform}"
+        name="microflac-${platform}"
         stage="${LIMEN_BUILD}/stage/${name}"
         rm -rf "${stage}"
         mkdir -p "${stage}"
@@ -221,7 +221,7 @@ microflac-test: flac-test
 
 # Publish CUETools.Flake for the given platforms with the pinned .NET SDK, each
 # archived with upstream's four licence notices into
-# $LIMEN_BUILD/dist/flake-<version>-<platform>.tar.gz.
+# $LIMEN_BUILD/dist/flake-<platform>.tar.gz.
 flake +targets: (_fetch "cuetools")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -236,7 +236,7 @@ flake +targets: (_fetch "cuetools")
         flake/build.sh "${src}" "$(just _dotnet-rid "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
-        name="flake-${version}-${platform}"
+        name="flake-${platform}"
         stage="${LIMEN_BUILD}/stage/${name}"
         rm -rf "${stage}"
         mkdir -p "${stage}"
@@ -260,7 +260,7 @@ flake-test: flac-test
 # Build mkfs.erofs (erofs-utils, patched, linking lz4) for the given platforms,
 # with fsck.erofs beside it where it builds (not windows), archived with
 # erofs-utils' and lz4's licence notices into
-# $LIMEN_BUILD/dist/erofs-<version>-<platform>.tar.gz.
+# $LIMEN_BUILD/dist/erofs-<platform>.tar.gz.
 erofs +targets: (_fetch "erofs-utils") (_fetch "lz4")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -276,7 +276,7 @@ erofs +targets: (_fetch "erofs-utils") (_fetch "lz4")
         erofs/build.sh "${src}" "${lz4}" "${version}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
-        name="erofs-${version}-${platform}"
+        name="erofs-${platform}"
         stage="${LIMEN_BUILD}/stage/${name}"
         rm -rf "${stage}"
         mkdir -p "${stage}/LICENSES"
@@ -299,7 +299,7 @@ erofs-test:
 
 # Build xz (XZ Utils, liblzma linked in) for the given platforms, archived
 # with upstream's licence notices into
-# $LIMEN_BUILD/dist/xz-<version>-<platform>.tar.gz.
+# $LIMEN_BUILD/dist/xz-<platform>.tar.gz.
 xz +targets: (_fetch "xz")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -314,7 +314,7 @@ xz +targets: (_fetch "xz")
         xz/build.sh "${src}" "${version}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
-        name="xz-${version}-${platform}"
+        name="xz-${platform}"
         stage="${LIMEN_BUILD}/stage/${name}"
         rm -rf "${stage}"
         mkdir -p "${stage}"
@@ -334,7 +334,7 @@ xz-test:
 # Build claxon (a FLAC decoder on the Claxon crate) for the given platforms
 # through limen's Rust lane, archived with Claxon's licence and this
 # repository's (src/main.rs is ours) into
-# $LIMEN_BUILD/dist/claxon-<crate version>-<platform>.tar.gz.
+# $LIMEN_BUILD/dist/claxon-<platform>.tar.gz.
 claxon +targets:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -352,7 +352,7 @@ claxon +targets:
     for platform in "$@"; do
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
-        name="claxon-${version}-${platform}"
+        name="claxon-${platform}"
         stage="${LIMEN_BUILD}/stage/${name}"
         rm -rf "${stage}"
         mkdir -p "${stage}"
@@ -373,7 +373,7 @@ claxon-test: flac-test
 # Build symphonia (a FLAC decoder on the Symphonia crates) for the given
 # platforms through limen's Rust lane, archived with the licence files of every
 # crate it links and this repository's (src/main.rs is ours) into
-# $LIMEN_BUILD/dist/symphonia-<crate version>-<platform>.tar.gz.
+# $LIMEN_BUILD/dist/symphonia-<platform>.tar.gz.
 symphonia +targets:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -385,12 +385,11 @@ symphonia +targets:
     CARGO_ENCODED_RUSTFLAGS=$(just _rust-remap)
     export CARGO_ENCODED_RUSTFLAGS
     just do build rust targets "${triples[@]}"
-    version=$(just _crate-version symphonia)
     mkdir -p "${LIMEN_BUILD}/dist"
     for platform in "$@"; do
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
-        name="symphonia-${version}-${platform}"
+        name="symphonia-${platform}"
         stage="${LIMEN_BUILD}/stage/${name}"
         rm -rf "${stage}"
         mkdir -p "${stage}/licences"
@@ -422,7 +421,7 @@ symphonia-test: flac-test
 # Publish cscoreflac (a FLAC decoder on CSCore's) for the given platforms with
 # the pinned .NET SDK, each archived with CSCore's licence and this
 # repository's (Program.cs is ours) into
-# $LIMEN_BUILD/dist/cscoreflac-<version>-<platform>.tar.gz.
+# $LIMEN_BUILD/dist/cscoreflac-<platform>.tar.gz.
 cscoreflac +targets: (_fetch "cscore")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -437,7 +436,7 @@ cscoreflac +targets: (_fetch "cscore")
         cscoreflac/build.sh "${src}" "$(just _dotnet-rid "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
-        name="cscoreflac-${version}-${platform}"
+        name="cscoreflac-${platform}"
         stage="${LIMEN_BUILD}/stage/${name}"
         rm -rf "${stage}"
         mkdir -p "${stage}"

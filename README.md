@@ -52,14 +52,18 @@ sources, and states the upstream licence its sources, patches and binaries are u
 
 ## Using a build
 
-A release (`vX.Y.Z`) carries `<tool>-<upstream version>-<os>-<arch>.tar.gz` per tool and
-platform, `checksums.txt`, and a GitHub build provenance attestation over every asset
-(`gh attestation verify <asset> --repo forkcloser/testbin`). A repository consumes a tool
-through its `pins.yaml`, one entry per platform its tests run on, with
-`verify: github-attestation forkcloser/testbin`, and a recipe that fetches the host's archive,
-checks it against the pinned sha256 and puts the binary on the PATH its tests see. The
-corresponding source of each tool's binaries is upstream's release,
-pinned in `pins.yaml` (url and sha256), e.g. flac's
+A release (`vX.Y.Z`) carries `<tool>-<os>-<arch>.tar.gz` per tool and platform,
+`checksums.txt`, and a GitHub build provenance attestation over every asset
+(`gh attestation verify <asset> --repo forkcloser/testbin`). The archive is the contract: it
+holds one directory of its own name, with the tool's binaries (`.exe` on windows) and the
+licence notices of what they are built from. Its name carries no upstream version, so a
+consumer's pin moves with the tag alone: a repository consumes a tool through its `pins.yaml`,
+one entry per platform its tests run on, with
+`verify: github-attestation forkcloser/testbin forkcloser/testbin/.github/workflows/release.yaml`,
+and a recipe that fetches the host's archive, checks it against the pinned sha256 and puts the
+binary on the PATH its tests see, under the name the tests expect. Which upstream version a
+release carries is in its notes: the corresponding source of each tool's binaries is upstream's
+release, pinned in `pins.yaml` (url and sha256), e.g. flac's
 `https://github.com/xiph/flac/releases/download/<version>/flac-<version>.tar.xz`; each release's
 notes link it, and the patches a tool's directory applies, at the release's tag.
 
