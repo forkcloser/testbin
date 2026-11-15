@@ -11,4 +11,4 @@ name = "claxon"
 path = "src/main.rs"
 
 [dependencies]
-claxon = "=0.4.2"
+claxon = "=0.4.3"
