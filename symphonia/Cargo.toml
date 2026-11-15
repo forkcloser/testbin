@@ -11,4 +11,4 @@ name = "symphonia"
 path = "src/main.rs"
 
 [dependencies]
-symphonia = { version = "=0.6.1", default-features = false, features = ["flac"] }
+symphonia = { version = "=0.6.0", default-features = false, features = ["flac"] }
