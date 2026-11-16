@@ -78,17 +78,20 @@ jobs:
           fi
 
   # Every tool for every platform, cross-built on linux hosts with the pinned
-  # zig, one runner a group of tools, the way a release builds them. The
-  # verify legs build their own platform and run it (`just test`).
+  # zig, one runner a group of tools, the way a release builds them; and the
+  # tools nothing cross-compiles (hadolint, in a container), on a runner of
+  # each linux architecture. The verify legs build their own platform and run
+  # it (`just test`).
   build:
     needs: plan
     strategy:
       fail-fast: false
       matrix:
-        tools: ${{ fromJSON(needs.plan.outputs.groups) }}
-    name: build (${{ matrix.tools }})
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
+        include: ${{ fromJSON(needs.plan.outputs.groups) }}
+    name: build (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    # hadolint is a compiler's work, twice: built, then built again.
+    timeout-minutes: 60
     permissions:
       contents: read
     steps:

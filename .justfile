@@ -16,6 +16,11 @@ platforms := "linux-amd64 linux-arm64 darwin-arm64 windows-amd64 windows-arm64"
 # a runner of their own. A tool missing here is built by nothing.
 build_groups := "flac|microflac|xz|erofs|graphviz|drflac foxenflac|flake cscoreflac|claxon symphonia"
 
+# The tools no runner cross-compiles, in groups as above: each is built on a
+# runner of every architecture it has a platform for, for that runner's own
+# platform alone (hadolint: GHC compiles for the machine it runs on).
+native_groups := "hadolint"
+
 # The FIRST recipe defined here becomes `just`'s default.
 lint: do::lint::default do::lint::rust::default do::lint::converge
 fix: do::fix::default do::fix::rust::default
@@ -23,8 +28,9 @@ fix: do::fix::default do::fix::rust::default
 test: flac-test drflac-test foxenflac-test microflac-test cscoreflac-test flake-test erofs-test xz-test graphviz-test claxon-test symphonia-test
 security: do::security::default
 
-# Build every tool for every platform into $LIMEN_BUILD/dist.
-build: (build-group replace(build_groups, "|", " "))
+# Build every tool for every platform into $LIMEN_BUILD/dist; of the native
+# tools, this host's platform.
+build: (build-group replace(build_groups, "|", " ")) (build-group replace(native_groups, "|", " "))
 
 # Build the named tools for every platform into $LIMEN_BUILD/dist.
 build-group +tools:
@@ -66,16 +72,25 @@ rebuild +tools:
     done
     exit "${failed}"
 
-# build_groups as the JSON array a workflow's matrix reads, one string a group.
+# The groups as the JSON array a workflow's matrix reads, one object a build:
+# its tools, the runner that builds them, and the name the two make. A group
+# of build_groups is one build, on the runner that cross-compiles; a group of
+# native_groups is one build a linux architecture, on a runner of it.
 build-matrix:
     #!/usr/bin/env bash
     set -euo pipefail
     IFS='|' read -r -a groups <<< "{{ build_groups }}"
+    IFS='|' read -r -a native <<< "{{ native_groups }}"
     printf '['
     sep=""
     for group in "${groups[@]}"; do
-        printf '%s"%s"' "${sep}" "${group}"
+        printf '%s{"tools":"%s","runner":"ubuntu-24.04","name":"%s"}' "${sep}" "${group}" "${group}"
         sep=","
+    done
+    for group in "${native[@]}"; do
+        printf '%s{"tools":"%s","runner":"ubuntu-24.04","name":"%s, linux-amd64"}' "${sep}" "${group}" "${group}"
+        sep=","
+        printf '%s{"tools":"%s","runner":"ubuntu-24.04-arm","name":"%s, linux-arm64"}' "${sep}" "${group}" "${group}"
     done
     printf ']\n'
 
@@ -593,6 +608,61 @@ _dotnet-rid platform:
         *) echo "unknown platform {{ platform }} (one of {{ platforms }})" >&2; exit 1 ;;
     esac
 
+# Build hadolint, static on musl, for the linux platform of this host's
+# architecture among those given, archived with upstream's licence into
+# $LIMEN_BUILD/dist/hadolint-<platform>.tar.gz. The other platforms given are
+# passed over: GHC builds for the machine it runs on, so the other linux
+# architecture is built on a runner of it, and there is no hadolint here for
+# macOS or windows.
+hadolint +targets: (_fetch "hadolint")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "$(uname -m)" in
+        x86_64) arch=amd64 ;;
+        arm64 | aarch64) arch=arm64 ;;
+        *) echo "hadolint: no build on $(uname -m)" >&2; exit 1 ;;
+    esac
+    version=$(limen pins get hadolint version)
+    src="${LIMEN_BUILD}/src/hadolint-${version}"
+    mkdir -p "${LIMEN_BUILD}/dist"
+    set -- {{ targets }}
+    for platform in "$@"; do
+        if [ "${platform}" != "linux-${arch}" ]; then
+            echo "hadolint: ${platform} is not built on this host (linux-${arch} is)"
+            continue
+        fi
+        just _fetch-file "ghc-${platform}"
+        just _fetch-file "cabal-${platform}"
+        out="${LIMEN_BUILD}/hadolint/${platform}"
+        rm -rf "${out}"
+        HADOLINT_COMMIT="${version}" HADOLINT_URL="$(limen pins get hadolint url)" hadolint/build.sh "${src}" \
+            "${LIMEN_BUILD}/src/ghc-${platform}-$(limen pins get "ghc-${platform}" version).tar.xz" \
+            "${LIMEN_BUILD}/src/cabal-${platform}-$(limen pins get "cabal-${platform}" version).tar.xz" \
+            "${arch}" "${out}/bin"
+        # Run where it was built, which is always here: no leg of `just test`
+        # pays for a compiler's build to do it.
+        hadolint/smoke.sh "${out}/bin"
+        name="hadolint-${platform}"
+        stage="${LIMEN_BUILD}/stage/${name}"
+        rm -rf "${stage}"
+        mkdir -p "${stage}"
+        cp "${out}/bin/hadolint" "${out}/bin/NOTICES" "${out}/bin/SOURCE" "${out}/bin/COPYING.LESSER" "${stage}/"
+        cp "${src}/LICENSE" "${stage}/"
+        scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
+    done
+
+# Build hadolint for this host, where it is a linux one, and run it.
+hadolint-test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    case "${platform}" in
+        linux-*) ;;
+        *) echo "hadolint: built for linux alone, nothing to run on ${platform}"; exit 0 ;;
+    esac
+    just hadolint "${platform}"
+    hadolint/smoke.sh "${LIMEN_BUILD}/hadolint/${platform}/bin"
+
 # The release notes' source section: each tool's upstream release, as pins.yaml
 # pins it, the corresponding source of the binaries built from it.
 release-notes:
@@ -615,6 +685,12 @@ release-notes:
     echo "- XZ Utils $(limen pins get xz version): $(limen pins get xz url)"
     echo "- Graphviz $(limen pins get graphviz version): $(limen pins get graphviz url)"
     echo "- expat $(limen pins get expat version): $(limen pins get expat url)"
+    echo "- hadolint $(limen pins get hadolint version): $(limen pins get hadolint url),"
+    echo "  a GPL-3 binary, statically linked: the SOURCE file in its archive names every component in it at"
+    echo "  its exact version and where its source is (GHC's release, each Hackage package of this repository's"
+    echo "  hadolint/cabal.project.freeze, the alpine packages of hadolint/apk-linked), and this repository's"
+    echo "  hadolint/ at this release's tag builds it again, to the same bytes for as long as Alpine serves the"
+    echo "  packages hadolint/apk.lock names"
     echo "- Claxon $(just _crate-version claxon): https://static.crates.io/crates/claxon/claxon-$(just _crate-version claxon).crate"
     echo "- Symphonia $(just _crate-version symphonia) and the crates it links, each from crates.io at the version and"
     echo "  checksum Cargo.lock records: $(just _crate-closure testbin-symphonia | tr '\n' ' ')"
@@ -623,7 +699,25 @@ release-notes:
 # against pins.yaml on every run (a reused build directory keeps the tarball),
 # and unpack it into $LIMEN_BUILD/src/<name>-<version>, whatever the top
 # directory upstream's tarball has.
-_fetch name:
+_fetch name: (_fetch-file name)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version=$(limen pins get {{ name }} version)
+    url=$(limen pins get {{ name }} url)
+    case "${url}" in
+        *.tar.xz) ext=tar.xz ;;
+        *) ext=tar.gz ;;
+    esac
+    dir="${LIMEN_BUILD}/src"
+    archive="${dir}/{{ name }}-${version}.${ext}"
+    rm -rf "${dir:?}/{{ name }}-${version}"
+    mkdir -p "${dir}/{{ name }}-${version}"
+    tar -xf "${archive}" -C "${dir}/{{ name }}-${version}" --strip-components=1
+
+# Fetch a pinned artifact to $LIMEN_BUILD/src/<name>-<version>.<ext> and
+# verify it against pins.yaml on every run, without unpacking it: a toolchain
+# is unpacked where it is installed.
+_fetch-file name:
     #!/usr/bin/env bash
     set -euo pipefail
     version=$(limen pins get {{ name }} version)
@@ -643,9 +737,6 @@ _fetch name:
         rm -f "${archive}"
         exit 1
     fi
-    rm -rf "${dir:?}/{{ name }}-${version}"
-    mkdir -p "${dir}/{{ name }}-${version}"
-    tar -xf "${archive}" -C "${dir}/{{ name }}-${version}" --strip-components=1
 
 # The rustc flags that keep the build out of a Rust binary, as
 # CARGO_ENCODED_RUSTFLAGS takes them. Its directories: the checkout, cargo's

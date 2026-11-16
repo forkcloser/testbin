@@ -1,0 +1,11 @@
+# The alpine packages whose code is in the binary, each at its version: the C
+# library, GMP (GHC's integers), and gcc's own runtime (its start files, and
+# libgcc). Not a claim: the build reads the link map and stops when the
+# packages the linker took from are not exactly these. zlib and libstdc++
+# are installed and nothing is taken from them. Each package here has its
+# licence in the archive's NOTICES and its source in SOURCE, so a line that
+# moves here is read again there.
+musl-dev 1.2.6-r3
+gmp-static 6.3.0-r4
+gcc 15.2.0-r5
+libgcc-static 15.2.0-r5
