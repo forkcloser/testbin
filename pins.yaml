@@ -187,3 +187,58 @@ pins:
       version: 11.0.100
       source: 9fcae146169241cc3a189b61d4b03f71814db0d08906153686f4ef99ac026886
       sha256: f9a271f91ea25a65f7eb742269b0881f657ff35b2b485016d27e2cc7b27c1969
+  # hadolint, at the commit a consumer's differential names, a master commit
+  # and not a release: the archive is GitHub's tarball of it. Bumped by hand
+  # (version and digest.version together), as foxenflac is.
+  - name: hadolint
+    renovate: git-refs https://github.com/hadolint/hadolint
+    version: 1d901b9c0b0d0445d19b1a9128d89fa55bb4604e
+    url: https://github.com/hadolint/hadolint/archive/${version}.tar.gz
+    verify: download
+    digest:
+      version: 1d901b9c0b0d0445d19b1a9128d89fa55bb4604e
+      source: 7a4dfb1df7874032a8161ca8a508a1336b4b4eefbbd3c4810706701275a2f526
+      sha256: a202e925d7fb5211ac23cc418d8d9a0509962fcedd04dc27e3ff05840d2ec0fc
+  # The compiler hadolint is built with, the release its own workflows
+  # install: GHC's build for musl, one entry an architecture, each tarball
+  # signed by the release's manager. Moved by hand with hadolint: the freeze
+  # file beside the recipe is of this compiler.
+  - name: ghc-linux-amd64
+    renovate: manual
+    version: 9.10.2
+    url: https://downloads.haskell.org/~ghc/${version}/ghc-${version}-x86_64-alpine3_18-linux.tar.xz
+    verify: pgp-detached https://downloads.haskell.org/~ghc/${version}/ghc-${version}-x86_64-alpine3_18-linux.tar.xz.sig https://keys.openpgp.org/vks/v1/by-fingerprint/88B57FCF7DB53B4DB3BFA4B1588764FBE22D19C4 88B57FCF7DB53B4DB3BFA4B1588764FBE22D19C4
+    digest:
+      version: 9.10.2
+      source: 190c8a0b09cb28b6c545717038ec69f81995a7a4f5dea3902000e9d472465d33
+      sha256: e54530aecb6bfbe8971a1344ba9e9193540efe7722b59146418007eeaf290c9c
+  - name: ghc-linux-arm64
+    renovate: manual
+    version: 9.10.2
+    url: https://downloads.haskell.org/~ghc/${version}/ghc-${version}-aarch64-alpine3_18-linux.tar.xz
+    verify: pgp-detached https://downloads.haskell.org/~ghc/${version}/ghc-${version}-aarch64-alpine3_18-linux.tar.xz.sig https://keys.openpgp.org/vks/v1/by-fingerprint/88B57FCF7DB53B4DB3BFA4B1588764FBE22D19C4 88B57FCF7DB53B4DB3BFA4B1588764FBE22D19C4
+    digest:
+      version: 9.10.2
+      source: 70ae9e56ea34752d2939191c2571b9824b440db5ed814b9fc39076a614ebacac
+      sha256: 15fd860629276fb0119a6a0d9061e5af5d6d81230a2b88fc43498e937b5006e2
+  # cabal-install, static binaries. Its release signs the SHA256SUMS file
+  # with a detached signature and no tarball, which no verify method reads:
+  # TLS is the guarantee.
+  - name: cabal-linux-amd64
+    renovate: manual
+    version: 3.18.2.0
+    url: https://downloads.haskell.org/~cabal/cabal-install-${version}/cabal-install-${version}-x86_64-linux-unknown.tar.xz
+    verify: download
+    digest:
+      version: 3.18.2.0
+      source: 213bd0b4d91c38589cfa3286d298dfa9044a0fc4ac9f564240f1c22895ef0a28
+      sha256: b4f4c83135da77cfc18ccd6056398ca714a2dad86d5f635621ffdda8f9afe587
+  - name: cabal-linux-arm64
+    renovate: manual
+    version: 3.18.2.0
+    url: https://downloads.haskell.org/~cabal/cabal-install-${version}/cabal-install-${version}-aarch64-linux-unknown.tar.xz
+    verify: download
+    digest:
+      version: 3.18.2.0
+      source: 356508e8ce1be0065b75c0bc76514dab3998f71ac65a4d81c414903c79323e9e
+      sha256: e4d940131ab0b78943a4b5ce64a9ef5acc452ea849df197787eaeecb1c3bf276
