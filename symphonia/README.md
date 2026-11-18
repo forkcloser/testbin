@@ -13,12 +13,16 @@ symphonia <input.flac> <output.raw>
 The output is what `flac -d --force-raw-format --endian=little --sign=signed` writes:
 interleaved, signed, little-endian samples at the stream's own bit depth (8, 16, 24 or 32 bits;
 another depth is refused). Symphonia's FLAC decoder left-justifies every depth in 32 bits; the
-program shifts each sample back. The stream's parameters go to stderr. Exit status 0 on
+program shifts each sample back. At 32 bits the samples are Symphonia's as it gives them, and
+Symphonia 0.6.1 gets some 32-bit stereo frames wrong, with no error
+(https://github.com/pdeljanov/Symphonia/issues/585): the program does not stand in its way. The stream's parameters go to stderr. Exit status 0 on
 success, 1 on any error, a frame Symphonia cannot decode included.
 
 - `src/main.rs` is the program around the crates, this repository's own.
-- `smoke.sh` encodes arbitrary PCM (the `flac` binary's own bytes) with the `flac` build, at 16
-  and at 24 bits, decodes it with `symphonia`, and requires the original bytes back.
+- `smoke.sh` runs `scripts/decoder-smoke.sh`, the test every decoder program here is held to: PCM
+  encoded by the `flac` build at 8, 16 and 24 bits comes back byte for byte, with the stream's
+  parameters on stderr, and without arguments the program prints its usage and exits 1. Not at 32
+  bits, for the reason above.
 
 ## Licence
 
