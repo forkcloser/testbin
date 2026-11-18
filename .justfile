@@ -22,8 +22,14 @@ build_groups := "flac|microflac|xz|erofs|graphviz|drflac foxenflac|flake cscoref
 native_groups := "hadolint"
 
 # The FIRST recipe defined here becomes `just`'s default.
-lint: do::lint::default do::lint::rust::default do::lint::converge
+lint: do::lint::default do::lint::rust::default do::lint::converge build-caps-test
 fix: do::fix::default do::fix::rust::default
+# The limits every build runs under: the job count reaches what a build
+# starts, the container is sized, a build past its time is stopped with what
+# it started, and no build here is started outside them.
+build-caps-test:
+    scripts/build-caps.sh --test
+
 # Each tool built for this host and run on it.
 test: flac-test drflac-test foxenflac-test microflac-test cscoreflac-test flake-test erofs-test xz-test graphviz-test claxon-test symphonia-test
 security: do::security::default
@@ -107,7 +113,7 @@ flac +targets: (_fetch "flac")
     for platform in "$@"; do
         out="${LIMEN_BUILD}/flac/${platform}"
         rm -rf "${out}"
-        flac/build.sh "${src}" "${version}" "$(just _zig-target "${platform}")" "${out}"
+        scripts/build-caps.sh run flac/build.sh "${src}" "${version}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
         name="flac-${platform}"
@@ -141,7 +147,7 @@ drflac +targets: (_fetch "drflac")
     for platform in "$@"; do
         out="${LIMEN_BUILD}/drflac/${platform}"
         rm -rf "${out}"
-        drflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
+        scripts/build-caps.sh run drflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
         name="drflac-${platform}"
@@ -176,7 +182,7 @@ foxenflac +targets: (_fetch "foxenflac")
     for platform in "$@"; do
         out="${LIMEN_BUILD}/foxenflac/${platform}"
         rm -rf "${out}"
-        foxenflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
+        scripts/build-caps.sh run foxenflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
         name="foxenflac-${platform}"
@@ -212,7 +218,7 @@ microflac +targets: (_fetch "microflac")
     for platform in "$@"; do
         out="${LIMEN_BUILD}/microflac/${platform}"
         rm -rf "${out}"
-        microflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
+        scripts/build-caps.sh run microflac/build.sh "${src}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
         name="microflac-${platform}"
@@ -248,7 +254,7 @@ flake +targets: (_fetch "cuetools")
     for platform in "$@"; do
         out="${LIMEN_BUILD}/flake/${platform}"
         rm -rf "${out}"
-        flake/build.sh "${src}" "$(just _dotnet-rid "${platform}")" "${out}"
+        scripts/build-caps.sh run flake/build.sh "${src}" "$(just _dotnet-rid "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
         name="flake-${platform}"
@@ -288,7 +294,7 @@ erofs +targets: (_fetch "erofs-utils") (_fetch "lz4")
     for platform in "$@"; do
         out="${LIMEN_BUILD}/erofs/${platform}"
         rm -rf "${out}"
-        erofs/build.sh "${src}" "${lz4}" "${version}" "$(just _zig-target "${platform}")" "${out}"
+        scripts/build-caps.sh run erofs/build.sh "${src}" "${lz4}" "${version}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
         name="erofs-${platform}"
@@ -326,7 +332,7 @@ xz +targets: (_fetch "xz")
     for platform in "$@"; do
         out="${LIMEN_BUILD}/xz/${platform}"
         rm -rf "${out}"
-        xz/build.sh "${src}" "${version}" "$(just _zig-target "${platform}")" "${out}"
+        scripts/build-caps.sh run xz/build.sh "${src}" "${version}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
         name="xz-${platform}"
@@ -366,7 +372,7 @@ graphviz +targets: (_fetch "graphviz") (_fetch "expat")
     for platform in "$@"; do
         out="${LIMEN_BUILD}/graphviz/${platform}"
         rm -rf "${out}"
-        graphviz/build.sh "${src}" "${expat}" "${version}" "${expat_version}" "$(just _zig-target "${platform}")" "${out}"
+        scripts/build-caps.sh run graphviz/build.sh "${src}" "${expat}" "${version}" "${expat_version}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
         name="graphviz-${platform}"
@@ -405,7 +411,7 @@ claxon +targets:
     done
     CARGO_ENCODED_RUSTFLAGS=$(just _rust-remap)
     export CARGO_ENCODED_RUSTFLAGS
-    just do build rust targets "${triples[@]}"
+    scripts/build-caps.sh run just do build rust targets "${triples[@]}"
     version=$(just _crate-version claxon)
     licence=$(echo "${LIMEN_BUILD}"/cargo/registry/src/*/"claxon-${version}/license")
     mkdir -p "${LIMEN_BUILD}/dist"
@@ -444,7 +450,7 @@ symphonia +targets:
     done
     CARGO_ENCODED_RUSTFLAGS=$(just _rust-remap)
     export CARGO_ENCODED_RUSTFLAGS
-    just do build rust targets "${triples[@]}"
+    scripts/build-caps.sh run just do build rust targets "${triples[@]}"
     mkdir -p "${LIMEN_BUILD}/dist"
     for platform in "$@"; do
         x=""
@@ -493,7 +499,7 @@ cscoreflac +targets: (_fetch "cscore")
     for platform in "$@"; do
         out="${LIMEN_BUILD}/cscoreflac/${platform}"
         rm -rf "${out}"
-        cscoreflac/build.sh "${src}" "$(just _dotnet-rid "${platform}")" "${out}"
+        scripts/build-caps.sh run cscoreflac/build.sh "${src}" "$(just _dotnet-rid "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
         name="cscoreflac-${platform}"
@@ -522,7 +528,7 @@ cscoreflac-lock: (_fetch "cscore")
     set -euo pipefail
     eval "$(just _dotnet)"
     version=$(limen pins get cscore version)
-    CSCORE_LOCKED=false CSCORE_LOCK_UPDATE=true cscoreflac/build.sh "${LIMEN_BUILD}/src/cscore-${version}" \
+    CSCORE_LOCKED=false CSCORE_LOCK_UPDATE=true scripts/build-caps.sh run cscoreflac/build.sh "${LIMEN_BUILD}/src/cscore-${version}" \
         "$(just _dotnet-rid "$(just _host-platform)")" "${LIMEN_BUILD}/cscoreflac/lock"
     just _lf cscoreflac/packages.lock.json
 
@@ -533,7 +539,7 @@ flake-lock: (_fetch "cuetools")
     set -euo pipefail
     eval "$(just _dotnet)"
     version=$(limen pins get cuetools version)
-    FLAKE_LOCKED=false FLAKE_LOCK_UPDATE=true flake/build.sh "${LIMEN_BUILD}/src/cuetools-${version}" \
+    FLAKE_LOCKED=false FLAKE_LOCK_UPDATE=true scripts/build-caps.sh run flake/build.sh "${LIMEN_BUILD}/src/cuetools-${version}" \
         "$(just _dotnet-rid "$(just _host-platform)")" "${LIMEN_BUILD}/flake/lock"
     just _lf flake/locks/*.lock.json
 
@@ -631,11 +637,15 @@ hadolint +targets: (_fetch "hadolint")
             echo "hadolint: ${platform} is not built on this host (linux-${arch} is)"
             continue
         fi
+        # The build's limit on time holds in this image: a container given a
+        # minute's work and two seconds is stopped. Run here, where a
+        # container can be started at all.
+        scripts/build-caps.sh container-test "$(. hadolint/versions.env && echo "${BUILD_IMAGE}")"
         just _fetch-file "ghc-${platform}"
         just _fetch-file "cabal-${platform}"
         out="${LIMEN_BUILD}/hadolint/${platform}"
         rm -rf "${out}"
-        HADOLINT_COMMIT="${version}" HADOLINT_URL="$(limen pins get hadolint url)" hadolint/build.sh "${src}" \
+        HADOLINT_COMMIT="${version}" HADOLINT_URL="$(limen pins get hadolint url)" scripts/build-caps.sh run hadolint/build.sh "${src}" \
             "${LIMEN_BUILD}/src/ghc-${platform}-$(limen pins get "ghc-${platform}" version).tar.xz" \
             "${LIMEN_BUILD}/src/cabal-${platform}-$(limen pins get "cabal-${platform}" version).tar.xz" \
             "${arch}" "${out}/bin"

@@ -54,10 +54,10 @@ cmp -s cabal.project.freeze /build/freeze.committed || {
   exit 1
 }
 
-cabal build --only-dependencies --disable-shared \
+cabal build --jobs="${BUILD_JOBS:?the job count}" --only-dependencies --disable-shared \
   --ghc-options='-split-sections -optl-static -fPIC' > /build/deps.log 2>&1 || { tail -n 60 /build/deps.log >&2; exit 1; }
 # The link writes its map: what the linker took, read below.
-cabal build --enable-executable-static --disable-executable-dynamic --disable-shared \
+cabal build --jobs="${BUILD_JOBS}" --enable-executable-static --disable-executable-dynamic --disable-shared \
   --ghc-options='-split-sections -optl-static -optl-pthread -fPIC -optl-Wl,-Map=/build/link.map' exe:hadolint > /build/build.log 2>&1 || { tail -n 60 /build/build.log >&2; exit 1; }
 cp "$(cabal list-bin hadolint)" /out/hadolint
 strip /out/hadolint

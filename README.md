@@ -56,6 +56,12 @@ sources, and states the upstream licence its sources, patches and binaries are u
   (`scripts/reproducible.sh`, `scripts/archive.sh`). The commit's time is read from git: a
   build from a source tarball sets `SOURCE_DATE_EPOCH` to it, or its archives are dated 0.
 
+- **A build does not take the whole machine.** Every build runs under `scripts/build-caps.sh`:
+  `BUILD_JOBS` compilers side by side, and as many cargo and cabal jobs (4 unless set); one
+  tool's build for one platform stopped after `BUILD_TIMEOUT` (30 minutes unless set, as
+  `timeout` takes it); `hadolint`'s container on `BUILD_CPUS` processors and `BUILD_MEMORY` of
+  memory (4, or the host's count where it has fewer, and `8g` unless set). Outside that container nothing caps memory but the job count.
+
 ## Using a build
 
 A release (`vX.Y.Z`) carries `<tool>-<os>-<arch>.tar.gz` per tool and platform,

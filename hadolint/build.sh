@@ -25,7 +25,10 @@ esac
 
 mkdir -p "${out}"
 out=$(cd "${out}" && pwd)
-docker run --rm --platform "linux/${arch}" \
+# Sized and timed by build-caps.sh.
+# shellcheck source=scripts/build-caps.sh
+. "${here}/../scripts/build-caps.sh"
+capped_container --rm --platform "linux/${arch}" \
   --volume "$(cd "${src}" && pwd):/in/src:ro" \
   --volume "$(cd "$(dirname "${ghc}")" && pwd)/$(basename "${ghc}"):/in/ghc.tar.xz:ro" \
   --volume "$(cd "$(dirname "${cabal}")" && pwd)/$(basename "${cabal}"):/in/cabal.tar.xz:ro" \
@@ -34,4 +37,5 @@ docker run --rm --platform "linux/${arch}" \
   --env "SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:?the time of the build}" \
   --env "HADOLINT_COMMIT=${HADOLINT_COMMIT:?the pinned commit}" \
   --env "HADOLINT_URL=${HADOLINT_URL:?the pinned source url}" \
-  "${BUILD_IMAGE}" sh /in/recipe/in-container.sh
+  --env "BUILD_JOBS=${build_jobs}" \
+  -- "${BUILD_IMAGE}" sh /in/recipe/in-container.sh
