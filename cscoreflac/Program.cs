@@ -46,6 +46,15 @@ public static class Program
                 int read;
                 while ((read = flac.Read(buffer, 0, buffer.Length)) > 0)
                 {
+                    // CSCore hands 8-bit samples over as WAV stores them,
+                    // unsigned (sample + 0x80); the raw form is signed.
+                    if (format.BitsPerSample == 8)
+                    {
+                        for (int i = 0; i < read; i++)
+                        {
+                            buffer[i] ^= 0x80;
+                        }
+                    }
                     raw.Write(buffer, 0, read);
                     written += read;
                 }
