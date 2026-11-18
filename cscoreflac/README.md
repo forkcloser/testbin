@@ -36,8 +36,9 @@ does not let a program catch; the process dies, with a nonzero exit status.
 - `build.sh` publishes it for one runtime identifier. `packages.lock.json` pins, by sha512, the
   one package a publish restores (`Microsoft.NET.ILLink.Tasks`), restored in locked mode;
   `just cscoreflac-lock` rewrites it.
-- `smoke.sh` encodes arbitrary PCM (the `flac` binary's own bytes) with the `flac` build, at 16
-  and at 24 bits, decodes it with `cscoreflac`, and requires the original bytes back.
+- `smoke.sh` runs `scripts/decoder-smoke.sh`, the test every decoder program here is held to: PCM
+  encoded by the `flac` build at 8, 16 and 24 bits comes back byte for byte, with the stream's
+  parameters on stderr, and without arguments the program prints its usage and exits 1.
 
 ## Licence
 
