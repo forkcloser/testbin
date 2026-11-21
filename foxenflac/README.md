@@ -20,8 +20,9 @@ ends before the frame count its STREAMINFO declares included.
 
 - `main.c` is the program around the library, this repository's own.
 - `build.sh` compiles it and `src/foxen-flac.c` for one zig target.
-- `smoke.sh` encodes arbitrary PCM (the `flac` binary's own bytes) with the `flac` build, at 16
-  and at 24 bits, decodes it with `foxenflac`, and requires the original bytes back.
+- `smoke.sh` runs `scripts/decoder-smoke.sh`, the test every decoder program here is held to: PCM
+  encoded by the `flac` build at 8, 16 and 24 bits comes back byte for byte, with the stream's
+  parameters on stderr, and without arguments the program prints its usage and exits 1.
 
 ## Licence
 

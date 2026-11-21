@@ -12,7 +12,8 @@ cscoreflac <input.flac> <output.raw>
 The output is what `flac -d --force-raw-format --endian=little --sign=signed` writes:
 interleaved, signed, little-endian samples at the stream's own bit depth (8, 16 or 24 bits; 12
 and 20 bits have no whole-byte raw form and are refused), which is the PCM `FlacFile.Read`
-returns. The stream's parameters go to stderr. Exit status 0 on success, 1 on any error.
+returns, but for 8 bits: CSCore returns those unsigned, as WAV stores them, and the program
+makes them signed. The stream's parameters go to stderr. Exit status 0 on success, 1 on any error.
 
 CSCore's decoder is lenient where the others are strict, and the program makes up for it:
 `FlacFile` skips a frame it cannot decode and returns nothing at all for a 32-bit stream, both
@@ -35,8 +36,9 @@ does not let a program catch; the process dies, with a nonzero exit status.
 - `build.sh` publishes it for one runtime identifier. `packages.lock.json` pins, by sha512, the
   one package a publish restores (`Microsoft.NET.ILLink.Tasks`), restored in locked mode;
   `just cscoreflac-lock` rewrites it.
-- `smoke.sh` encodes arbitrary PCM (the `flac` binary's own bytes) with the `flac` build, at 16
-  and at 24 bits, decodes it with `cscoreflac`, and requires the original bytes back.
+- `smoke.sh` runs `scripts/decoder-smoke.sh`, the test every decoder program here is held to: PCM
+  encoded by the `flac` build at 8, 16 and 24 bits comes back byte for byte, with the stream's
+  parameters on stderr, and without arguments the program prints its usage and exits 1.
 
 ## Licence
 
