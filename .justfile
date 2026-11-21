@@ -274,21 +274,22 @@ flake-test: flac-test
 
 # Build mkfs.erofs (erofs-utils, patched, linking lz4) for the given platforms,
 # with fsck.erofs beside it where it builds (not windows), archived with
-# erofs-utils' and lz4's licence notices into
+# erofs-utils', lz4's and libdeflate's licence notices into
 # $LIMEN_BUILD/dist/erofs-<platform>.tar.gz.
-erofs +targets: (_fetch "erofs-utils") (_fetch "lz4")
+erofs +targets: (_fetch "erofs-utils") (_fetch "lz4") (_fetch "libdeflate")
     #!/usr/bin/env bash
     set -euo pipefail
     export ZIG_GLOBAL_CACHE_DIR="${LIMEN_BUILD}/zig/global" ZIG_LOCAL_CACHE_DIR="${LIMEN_BUILD}/zig/local"
     version=$(limen pins get erofs-utils version)
     src="${LIMEN_BUILD}/src/erofs-utils-${version}"
     lz4="${LIMEN_BUILD}/src/lz4-$(limen pins get lz4 version)"
+    libdeflate="${LIMEN_BUILD}/src/libdeflate-$(limen pins get libdeflate version)"
     mkdir -p "${LIMEN_BUILD}/dist"
     set -- {{ targets }}
     for platform in "$@"; do
         out="${LIMEN_BUILD}/erofs/${platform}"
         rm -rf "${out}"
-        erofs/build.sh "${src}" "${lz4}" "${version}" "$(just _zig-target "${platform}")" "${out}"
+        erofs/build.sh "${src}" "${lz4}" "${libdeflate}" "${version}" "$(just _zig-target "${platform}")" "${out}"
         x=""
         case "${platform}" in windows-*) x=".exe" ;; esac
         name="erofs-${platform}"
@@ -300,6 +301,7 @@ erofs +targets: (_fetch "erofs-utils") (_fetch "lz4")
         cp "${src}/COPYING" "${stage}/"
         cp "${src}/LICENSES/GPL-2.0" "${src}/LICENSES/MIT" "${stage}/LICENSES/"
         cp "${lz4}/lib/LICENSE" "${stage}/LICENSE.lz4"
+        cp "${libdeflate}/COPYING" "${stage}/LICENSE.libdeflate"
         scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 

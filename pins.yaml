@@ -85,6 +85,19 @@ pins:
       version: 1.11.1
       source: 3d79e491d1520c1511726a815e95c933e1d76a07ca7ea04cb23c3cea2a68c1e9
       sha256: 683fed08a844ad012196381e40badf80c0bbe4962959761416d41c9e67d77ec7
+  # libdeflate's release tag: the inflater fsck.erofs reads deflate images
+  # with (erofs-utils compresses deflate itself and decompresses it with
+  # zlib or libdeflate).
+  - name: libdeflate
+    renovate: github-tags ebiggers/libdeflate
+    extract-version: ^v(?<version>[0-9]+\.[0-9]+)$
+    version: "1.26"
+    url: https://github.com/ebiggers/libdeflate/archive/refs/tags/v${version}.tar.gz
+    verify: download
+    digest:
+      version: 1.26
+      source: 50e178e9b7d5597ad5fe119498a010e9559d7d7324457daea9752677327b6daf
+      sha256: bba03fffc5538576213675ce6968fcff6ce2e67d82e4d5febea2d05f9f13cf85
   # XZ Utils' release tarball, held to the signature upstream publishes
   # beside it: Lasse Collin's key, by the fingerprint the project gives at
   # https://tukaani.org/contact.html. The key's URL is transport, the

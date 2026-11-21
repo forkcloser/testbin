@@ -14,7 +14,7 @@ other uses, or covered by any compatibility promise.
 | [`microflac/`](microflac/) | `microflac`, a FLAC decoder on microFLAC | [esphome-libs/micro-flac](https://github.com/esphome-libs/micro-flac) |
 | [`flake/`](flake/) | `CUETools.Flake`, CUETools' FLAC encoder | [gchudov/cuetools.net](https://github.com/gchudov/cuetools.net) |
 | [`cscoreflac/`](cscoreflac/) | `cscoreflac`, a FLAC decoder on CSCore's | [filoe/cscore](https://github.com/filoe/cscore) |
-| [`erofs/`](erofs/) | `mkfs.erofs`, `fsck.erofs` (not windows) | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) |
+| [`erofs/`](erofs/) | `mkfs.erofs`, `fsck.erofs` (not windows) | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) and [libdeflate](https://github.com/ebiggers/libdeflate) |
 | [`xz/`](xz/) | `xz` | [tukaani-project/xz](https://github.com/tukaani-project/xz) |
 | [`graphviz/`](graphviz/) | `dot` | [graphviz](https://gitlab.com/graphviz/graphviz), with [expat](https://github.com/libexpat/libexpat) |
 | [`hadolint/`](hadolint/) | `hadolint` (linux alone; a GPL-3 binary, published to be run by tests and linked by nothing) | [hadolint/hadolint](https://github.com/hadolint/hadolint), at a commit, not a release |
