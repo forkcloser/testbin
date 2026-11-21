@@ -44,7 +44,7 @@ pins:
   - name: microflac
     renovate: github-tags esphome-libs/micro-flac
     extract-version: ^v(?<version>.*)$
-    version: 0.3.0
+    version: 0.3.1
     url: https://github.com/esphome-libs/micro-flac/archive/refs/tags/v${version}.tar.gz
     verify: download
     digest:
