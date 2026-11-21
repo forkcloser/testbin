@@ -89,6 +89,9 @@ int main(int argc, char **argv) {
       if (have == sizeof(buf)) return fail(input, "the decoder makes no progress");
     }
   }
+  /* libfoxenflac is fed bytes and never told they ended: only here is it
+   * known that the stream info never came. */
+  if (width == 0) return fail(input, "the input ends before the stream info");
   if (channels > 0 && declared > 0 && written != (unsigned long long)(declared * channels)) {
     fprintf(stderr, "foxenflac: %s: decoded %llu frames, the stream declares %lld\n", input,
             written / (unsigned long long)channels, declared);

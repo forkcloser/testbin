@@ -17,7 +17,8 @@ any error.
 - `build.sh` compiles it for one zig target.
 - `smoke.sh` runs `scripts/decoder-smoke.sh`, the test every decoder program here is held to: PCM
   encoded by the `flac` build at 8, 16, 24 and 32 bits comes back byte for byte, with the stream's
-  parameters on stderr, and without arguments the program prints its usage and exits 1.
+  parameters on stderr, without arguments the program prints its usage and exits 1, and an input cut short is an
+  error.
 
 ## Licence
 

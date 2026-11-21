@@ -16,13 +16,14 @@ libfoxenflac reads the frame-header depth codes for 8, 12, 16, 20 and 24 bits an
 32-bit stream does not decode; 12 and 20 bits decode but have no whole-byte raw form and are
 refused. libfoxenflac left-justifies every depth in 32 bits; the program shifts each sample back.
 The stream's parameters go to stderr. Exit status 0 on success, 1 on any error, a stream that
-ends before the frame count its STREAMINFO declares included.
+ends before its stream info or before the frame count its STREAMINFO declares included.
 
 - `main.c` is the program around the library, this repository's own.
 - `build.sh` compiles it and `src/foxen-flac.c` for one zig target.
 - `smoke.sh` runs `scripts/decoder-smoke.sh`, the test every decoder program here is held to: PCM
   encoded by the `flac` build at 8, 16 and 24 bits comes back byte for byte, with the stream's
-  parameters on stderr, and without arguments the program prints its usage and exits 1.
+  parameters on stderr, without arguments the program prints its usage and exits 1, and an input cut short is an
+  error.
 
 ## Licence
 
