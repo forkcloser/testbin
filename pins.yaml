@@ -48,9 +48,9 @@ pins:
     url: https://github.com/esphome-libs/micro-flac/archive/refs/tags/v${version}.tar.gz
     verify: download
     digest:
-      version: 0.3.0
-      source: fbb7bfe8e4755ebe6ddc51b01508786827ea0572ea6e513ef10695b4a648ee1f
-      sha256: ac2c7a8ef05485b36f50468b056ec93ffb2503632b18b64a8966d0feb1c13337
+      version: 0.3.1
+      source: 957a73a942e02588ef1acf1b01089d2738088510e6ac8238cc45bdea23a80d01
+      sha256: b0fa2c0310b2831be37319a8c9023c0ae8bfc8bb23ce756c0163db252cfb683b
   # CUETools' release tag; its Flake encoder is built from the tag tarball.
   - name: cuetools
     renovate: github-tags gchudov/cuetools.net
