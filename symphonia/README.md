@@ -15,7 +15,9 @@ interleaved, signed, little-endian samples at the stream's own bit depth (8, 16,
 another depth is refused). Symphonia's FLAC decoder left-justifies every depth in 32 bits; the
 program shifts each sample back. At 32 bits the samples are Symphonia's as it gives them, and
 Symphonia 0.6.1 gets some 32-bit stereo frames wrong, with no error
-(https://github.com/pdeljanov/Symphonia/issues/585): the program does not stand in its way. The stream's parameters go to stderr. Exit status 0 on
+(https://github.com/pdeljanov/Symphonia/issues/585): the program does not stand in its way. A stream with
+no audio frame does not open: Symphonia looks for the first frame as it opens the stream and
+reports `unexpected end of file`, where `flac -d` writes an empty output and exits 0. The stream's parameters go to stderr. Exit status 0 on
 success, 1 on any error, a frame Symphonia cannot decode included.
 
 - `src/main.rs` is the program around the crates, this repository's own.
