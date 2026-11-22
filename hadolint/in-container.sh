@@ -54,8 +54,46 @@ cmp -s cabal.project.freeze /build/freeze.committed || {
   exit 1
 }
 
-cabal build --only-dependencies --disable-shared \
-  --ghc-options='-split-sections -optl-static -fPIC' > /build/deps.log 2>&1 || { tail -n 60 /build/deps.log >&2; exit 1; }
+# EXPERIMENT, not for merge: which process holds a descriptor open for writing
+# on a file of cabal's store, sampled through the dependencies' build, with
+# cabal's own job count and then with one job.
+watch() {
+  while :; do
+    # shellcheck disable=SC2012 # the listing's arrows are what is read
+    ls -l /proc/[0-9]*/fd 2> /dev/null |
+      awk '/^\/proc\//{ split($0, a, "/"); pid = a[3] } / -> \/build\/cabal\/store\//{ print pid, $(NF-2), $NF }' |
+      while read -r pid fd target; do
+        flags=$(sed -n 's/^flags:[[:space:]]*//p' "/proc/${pid}/fdinfo/${fd}" 2> /dev/null) || continue
+        case "${flags}" in *[1256]) ;; *) continue ;; esac
+        echo "$(date +%s) pid=${pid} fd=${fd} flags=${flags} ${target} :: $(tr '\0' ' ' < "/proc/${pid}/cmdline" 2> /dev/null | cut -c1-120)" >> "$1"
+      done
+  done
+}
+report() {
+  echo "EXPERIMENT $1: $2 seconds, $(wc -l < "$3") samples of a store file held open for writing" >&2
+  echo "EXPERIMENT $1: samples by holder, by flags, by file:" >&2
+  awk '{ n = split($5, t, "/"); m = split($7, c, "/"); print c[m], $4, t[n] }' "$3" | sort | uniq -c | sort -rn | head -n 40 >&2
+  echo "EXPERIMENT $1: holders that are not cabal, first lines:" >&2
+  awk '{ m = split($7, c, "/"); if (c[m] != "cabal") print }' "$3" | head -n 25 >&2
+}
+echo "EXPERIMENT: $(nproc) processors" >&2
+for jobs in default 1; do
+  rm -rf /build/cabal/store dist-newstyle
+  : > "/build/watch.${jobs}"
+  watch "/build/watch.${jobs}" &
+  watcher=$!
+  started=$(date +%s)
+  if [ "${jobs}" = default ]; then
+    cabal build --only-dependencies --disable-shared \
+      --ghc-options='-split-sections -optl-static -fPIC' > /build/deps.log 2>&1 || { tail -n 60 /build/deps.log >&2; report "jobs=${jobs} FAILED" "$(($(date +%s) - started))" "/build/watch.${jobs}"; exit 1; }
+  else
+    cabal build -j1 --only-dependencies --disable-shared \
+      --ghc-options='-split-sections -optl-static -fPIC' > /build/deps.log 2>&1 || { tail -n 60 /build/deps.log >&2; report "jobs=${jobs} FAILED" "$(($(date +%s) - started))" "/build/watch.${jobs}"; exit 1; }
+  fi
+  ended=$(date +%s)
+  kill "${watcher}" 2> /dev/null || true
+  report "jobs=${jobs}" "$((ended - started))" "/build/watch.${jobs}"
+done
 # The link writes its map: what the linker took, read below.
 cabal build --enable-executable-static --disable-executable-dynamic --disable-shared \
   --ghc-options='-split-sections -optl-static -optl-pthread -fPIC -optl-Wl,-Map=/build/link.map' exe:hadolint > /build/build.log 2>&1 || { tail -n 60 /build/build.log >&2; exit 1; }
