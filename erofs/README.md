@@ -1,14 +1,20 @@
 # erofs
 
 `mkfs.erofs`, from [erofs-utils](https://github.com/erofs/erofs-utils)' release tag `pins.yaml`
-pins (`v<version>`, sha256), linking [lz4](https://github.com/lz4/lz4) from its pinned tag,
+pins (`v<version>`, sha256), linking [lz4](https://github.com/lz4/lz4) and
+[libdeflate](https://github.com/ebiggers/libdeflate) from their pinned tags,
 built with the pinned zig for linux and windows, amd64 and arm64, and darwin arm64; `fsck.erofs` beside it
 on linux and darwin, where it builds.
 
 The build is configured as forkcloser/erofs's image-backed tests need it: lz4 and lz4hc, the
-built-in deflate compressor, no other compression library (zlib, liblzma, libdeflate, libzstd),
+built-in deflate compressor, libdeflate, no other compression library (zlib, liblzma, libzstd),
 no libuuid, libselinux, curl, openssl, libxml2, json-c, liburing or fuse, and a maximum block size
 of 16 KiB on every platform. Multi-threaded compression is on except on windows.
+
+erofs-utils compresses deflate with code of its own (`-zdeflate`) and reads it back with zlib or
+libdeflate: libdeflate is there so that `fsck.erofs` extracts the deflate images `mkfs.erofs`
+writes. With it `mkfs.erofs` also takes `-zlibdeflate`, erofs-utils' second deflate compressor;
+`-zdeflate` writes the same images as without it.
 
 - `build.sh` compiles it for one zig target, straight from the sources configure would pick,
   without autotools. It also builds `fsck.erofs` where it compiles (not windows): the smoke
@@ -32,7 +38,7 @@ of 16 KiB on every platform. Multi-threaded compression is on except on windows.
   fixes every name, mode, owner and time, the root directory's included (without its entry,
   mkfs.erofs gives the root the uid and gid of whoever runs it), and `-T0` and `-U` fix the rest
   (`SOURCE_DATE_EPOCH`, which overrides `-T`, is cleared). Where `fsck.erofs` sits beside it,
-  each image readable without zlib is also extracted and compared with the tar's files. A tar
+  each image is also extracted and compared with the tar's files. A tar
   read from a pipe must give the same image as the file.
 - `testdata/fixture.py` writes `testdata/fixture.tar` byte for byte. CI never runs it; the tar
   is committed.
@@ -44,8 +50,8 @@ differs between an x86 and an arm64 host. The smoke test always passes it.
 
 erofs-utils is upstream's, under upstream's terms: its library under GPL-2.0-or-later or MIT,
 `mkfs.erofs` under MIT, the bundled xxhash under BSD-2-Clause or GPL-2.0-only (`COPYING`,
-`LICENSES/GPL-2.0`, `LICENSES/MIT`). lz4's library is under BSD-2-Clause (`LICENSE.lz4`). Each
-release archive carries these four files. `patches/` and `mingw-compat/` change and stand in for
+`LICENSES/GPL-2.0`, `LICENSES/MIT`). lz4's library is under BSD-2-Clause (`LICENSE.lz4`),
+libdeflate under MIT (`LICENSE.libdeflate`). Each release archive carries these five files. `patches/` and `mingw-compat/` change and stand in for
 erofs-utils' library and are under the same terms, GPL-2.0-or-later or MIT. The corresponding
 source is upstream's release tarballs, pinned in `pins.yaml` (url and sha256), with `patches/`
 and `mingw-compat/` at the release's tag. This directory's other files are under the

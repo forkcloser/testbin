@@ -46,14 +46,13 @@ fi
 "${mkfs}" -V | head -n 1
 
 common=(-T0 -U 6f8d1b52-6c5e-4b0a-9d1c-2b6f0d3e4a71 --quiet --tar=f)
-# name | options | sha256 of the image | whether fsck.erofs can read it back
-# (the deflate decompressor needs zlib, which this build leaves out).
+# name | options | sha256 of the image
 cases=(
-  "plain|-b4096|b8cd2965f6d9b87b4f851af8b8e5e576cf5fbb2967f1eb2fb02159adf6d22a0d|yes"
-  "noinline|-b4096 -Enoinline_data|0222f0a597cbbf7c3cf6e80f2532c6ad011dc60882639caaaf14af39d6768ba6|yes"
-  "lz4|-b4096 -zlz4|1efae009642fb2aafd8da59e95ae496af57193b81973ea9873425dbac16654b2|yes"
-  "lz4hc|-b16384 -zlz4hc,12 -Ededupe|215d19f1bf35a106c9934c729fcd0f6096249f7fe1cbcedfa37ca57a99ea5674|yes"
-  "deflate|-b512 -zdeflate|499572aad78d062d54a8b25b0b6926c6498e98bdc4fdda9e0f43ce16bdeb108c|no"
+  "plain|-b4096|b8cd2965f6d9b87b4f851af8b8e5e576cf5fbb2967f1eb2fb02159adf6d22a0d"
+  "noinline|-b4096 -Enoinline_data|0222f0a597cbbf7c3cf6e80f2532c6ad011dc60882639caaaf14af39d6768ba6"
+  "lz4|-b4096 -zlz4|1efae009642fb2aafd8da59e95ae496af57193b81973ea9873425dbac16654b2"
+  "lz4hc|-b16384 -zlz4hc,12 -Ededupe|215d19f1bf35a106c9934c729fcd0f6096249f7fe1cbcedfa37ca57a99ea5674"
+  "deflate|-b512 -zdeflate|499572aad78d062d54a8b25b0b6926c6498e98bdc4fdda9e0f43ce16bdeb108c"
 )
 
 if [ -x "${fsck}" ]; then
@@ -62,7 +61,7 @@ if [ -x "${fsck}" ]; then
 fi
 
 for c in "${cases[@]}"; do
-  IFS='|' read -r name opts want readable <<< "${c}"
+  IFS='|' read -r name opts want <<< "${c}"
   read -r -a o <<< "${opts}"
   "${mkfs}" "${common[@]}" "${o[@]}" "${name}.img" fixture.tar
   have=$(sha256 "${name}.img")
@@ -70,13 +69,13 @@ for c in "${cases[@]}"; do
     echo "${name} (${opts}): sha256 ${have}, want ${want}" >&2
     exit 1
   fi
-  if [ -x "${fsck}" ] && [ "${readable}" = yes ]; then
+  if [ -x "${fsck}" ]; then
     rm -rf out
     "${fsck}" --extract=out --no-preserve "${name}.img"
     diff -r ref out
     [ "$(readlink out/dir/link)" = small.txt ]
   fi
-  echo "mkfs.erofs ${opts}: the expected image$([ -x "${fsck}" ] && [ "${readable}" = yes ] && echo ", extracted identical to the tar")"
+  echo "mkfs.erofs ${opts}: the expected image$([ -x "${fsck}" ] && echo ", extracted identical to the tar")"
 done
 
 # The tar from a pipe, as from a file: the stream path the windows patches

@@ -4,13 +4,15 @@
  * PACKAGE_VERSION comes from build.sh, which reads it from pins.yaml.
  *
  * The build is configured as forkcloser/erofs's was: lz4 and lz4hc on, the
- * built-in deflate compressor (kite_deflate), every optional library off
- * (zlib, liblzma, libdeflate, libzstd, libuuid, libselinux, xxhash, curl,
+ * built-in deflate compressor (kite_deflate), libdeflate to read deflate
+ * back, every other optional library off
+ * (zlib, liblzma, libzstd, libuuid, libselinux, xxhash, curl,
  * openssl, libxml2, json-c, liburing, fuse), the block size up to 16 KiB on
  * every target. */
 
 #define LZ4_ENABLED 1
 #define LZ4HC_ENABLED 1
+#define HAVE_LIBDEFLATE 1
 
 /* configure pins it from the build host's page size; forkcloser/erofs sets
  * MAX_BLOCK_SIZE=16384 so every platform's mkfs writes the same images. */
