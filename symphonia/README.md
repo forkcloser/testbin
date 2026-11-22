@@ -21,7 +21,8 @@ success, 1 on any error, a frame Symphonia cannot decode included.
 - `src/main.rs` is the program around the crates, this repository's own.
 - `smoke.sh` runs `scripts/decoder-smoke.sh`, the test every decoder program here is held to: PCM
   encoded by the `flac` build at 8, 16 and 24 bits comes back byte for byte, with the stream's
-  parameters on stderr, and without arguments the program prints its usage and exits 1. Not at 32
+  parameters on stderr, without arguments the program prints its usage and exits 1, and an input cut short is an
+  error. Not at 32
   bits, for the reason above.
 
 ## Licence

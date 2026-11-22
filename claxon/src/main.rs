@@ -27,13 +27,24 @@ fn run(input: &str, output: &str) -> Result<(), String> {
     );
 
     let mut out = BufWriter::new(File::create(output).map_err(|e| format!("{output}: {e}"))?);
+    let mut written: u64 = 0;
     for sample in reader.samples() {
         let sample = sample.map_err(|e| format!("{input}: {e}"))?;
         // The low bytes of the two's complement are the sample at its depth.
         out.write_all(&sample.to_le_bytes()[..width])
             .map_err(|e| format!("{output}: {e}"))?;
+        written += 1;
     }
-    out.flush().map_err(|e| format!("{output}: {e}"))
+    out.flush().map_err(|e| format!("{output}: {e}"))?;
+    // Claxon ends without an error where the input does, at a frame boundary.
+    let channels = u64::from(info.channels);
+    match info.samples {
+        Some(declared) if declared > 0 && written != declared * channels => Err(format!(
+            "{input}: decoded {} frames, the stream declares {declared}",
+            written / channels
+        )),
+        _ => Ok(()),
+    }
 }
 
 fn main() -> ExitCode {

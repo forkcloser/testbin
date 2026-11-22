@@ -91,6 +91,9 @@ int main(int argc, char **argv) {
     }
     if (std::fclose(out) != 0) return fail(output, "write error");
 
+    // microFLAC is fed bytes and never told they ended: only here is it known
+    // that the stream info never came.
+    if (channels == 0) return fail(input, "the input ends before the stream info");
     const uint64_t declared = decoder.get_stream_info().total_samples_per_channel();
     if (channels > 0 && declared > 0 && written != declared * channels) {
         std::fprintf(stderr, "microflac: %s: decoded %llu frames, the stream declares %llu\n", input,

@@ -12,14 +12,15 @@ claxon <input.flac> <output.raw>
 The output is what `flac -d --force-raw-format --endian=little --sign=signed` writes:
 interleaved, signed, little-endian samples at the stream's own bit depth (8, 16 or 24 bits;
 another depth is refused). The stream's parameters go to stderr. Exit status 0 on success, 1 on
-any error. Claxon predates RFC 9639: it reads frame-header depth codes for 8, 12, 16, 20 and 24
+any error, a stream that ends before the frame count its STREAMINFO declares included. Claxon predates RFC 9639: it reads frame-header depth codes for 8, 12, 16, 20 and 24
 bits, refuses the 32-bit code as reserved, and refuses a header that leaves the depth to the
 stream info, so a 32-bit stream, or one of a depth without a code of its own, does not decode.
 
 - `src/main.rs` is the program around the crate, this repository's own.
 - `smoke.sh` runs `scripts/decoder-smoke.sh`, the test every decoder program here is held to: PCM
   encoded by the `flac` build at 8, 16 and 24 bits comes back byte for byte, with the stream's
-  parameters on stderr, and without arguments the program prints its usage and exits 1.
+  parameters on stderr, without arguments the program prints its usage and exits 1, and an input cut short is an
+  error.
 
 ## Licence
 

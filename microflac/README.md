@@ -15,15 +15,16 @@ The output is what `flac -d --force-raw-format --endian=little --sign=signed` wr
 interleaved, signed, little-endian samples at the stream's own bit depth (8, 16, 24 or 32 bits;
 another depth is refused), which is microFLAC's own byte-packed output on every host. Frame CRCs
 are checked (microFLAC's default). The stream's parameters go to stderr. Exit status 0 on
-success, 1 on any error, a stream that ends before the frame count its STREAMINFO declares
-included.
+success, 1 on any error, a stream that ends before its stream info or before the frame count its
+STREAMINFO declares included.
 
 - `main.cpp` is the program around the library, this repository's own.
 - `build.sh` compiles it and microFLAC's decoder sources (`cmake/sources.cmake`'s) for one zig
   target.
 - `smoke.sh` runs `scripts/decoder-smoke.sh`, the test every decoder program here is held to: PCM
   encoded by the `flac` build at 8, 16, 24 and 32 bits comes back byte for byte, with the stream's
-  parameters on stderr, and without arguments the program prints its usage and exits 1.
+  parameters on stderr, without arguments the program prints its usage and exits 1, and an input cut short is an
+  error.
 
 ## Licence
 
