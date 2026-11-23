@@ -44,13 +44,13 @@ pins:
   - name: microflac
     renovate: github-tags esphome-libs/micro-flac
     extract-version: ^v(?<version>.*)$
-    version: 0.3.1
+    version: 0.3.2
     url: https://github.com/esphome-libs/micro-flac/archive/refs/tags/v${version}.tar.gz
     verify: download
     digest:
-      version: 0.3.1
-      source: 957a73a942e02588ef1acf1b01089d2738088510e6ac8238cc45bdea23a80d01
-      sha256: b0fa2c0310b2831be37319a8c9023c0ae8bfc8bb23ce756c0163db252cfb683b
+      version: 0.3.2
+      source: 324d1675c126cad0a7e2902a5a38813f41870e3abe6cf333b61dd914032fb37f
+      sha256: 3989b1302183d4748e731c33c5f4f7fc59e137da968aa5fc36ba3576cb9a2db2
   # CUETools' release tag; its Flake encoder is built from the tag tarball.
   - name: cuetools
     renovate: github-tags gchudov/cuetools.net
