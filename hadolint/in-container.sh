@@ -54,12 +54,83 @@ cmp -s cabal.project.freeze /build/freeze.committed || {
   exit 1
 }
 
-cabal build --only-dependencies --disable-shared \
-  --ghc-options='-split-sections -optl-static -fPIC' > /build/deps.log 2>&1 || { tail -n 60 /build/deps.log >&2; exit 1; }
+# The dependencies, in two steps. cabal-install builds a package of build
+# type Simple inside its own process, the copy into its store included, and
+# opens no file close-on-exec: whatever it starts while a file is open for
+# writing inherits the descriptor and holds it for as long as it runs. With
+# several jobs, a compiler started for one package while cabal writes the
+# executable of another holds that executable open for writing, and the
+# kernel refuses to run a file somebody may write to (ETXTBSY, "Text file
+# busy"): the build then fails at the first package that runs the tool. So
+# the executables the plan runs during the build (alex is one) are built
+# first, one job at a time, by a cabal that has exited before the rest is
+# built in parallel; that second cabal finds them in its store and writes
+# none of them.
+deps() {
+  cabal build "$@" --disable-shared --ghc-options='-split-sections -optl-static -fPIC'
+}
+deps --only-dependencies --dry-run > /build/deps.log 2>&1 || { tail -n 60 /build/deps.log >&2; exit 1; }
+# shellcheck disable=SC2016 # jq's variables, not the shell's
+jq -r '
+  ."install-plan" as $plan
+  | [$plan[] | (."exe-depends" // []), ((.components // {})[] | ."exe-depends" // [])] | flatten | unique as $run
+  | $plan[] | select(.type == "configured" and (.id as $id | $run | index($id) != null))
+  | ."pkg-name" as $name
+  | if ."component-name" then [[."component-name", ."bin-file"]]
+    else [(.components // {}) | to_entries[] | select(.key | startswith("exe:")) | [.key, .value."bin-file"]] end
+  | .[] | [$name, .[0], (.[1] // "")] | @tsv' \
+  dist-newstyle/cache/plan.json > /build/tools.plan
+sort -u /build/tools.plan > /build/tools
+# The plan this repository froze runs alex: a list with nothing in it is a
+# plan that was not read, or a store that already held the tools (a unit
+# cabal need not build is not "configured"), and the checks below would pass
+# on nothing.
+[ -s /build/tools ] || { echo "hadolint: the plan names no executable to build first, in a store that starts empty" >&2; exit 1; }
+# Fully qualified: cabal reads the shorter "alex:exe:alex" two ways and stops.
+tool_targets=$(awk -F '\t' '{ printf ":pkg:%s:%s ", $1, $2 }' /build/tools)
+awk -F '\t' '$3 == "" { print "hadolint: the plan names no file for " $1 " " $2 > "/dev/stderr"; bad = 1 } END { exit bad }' /build/tools
+cut -f 3 /build/tools > /build/tools.files
+started=$(date +%s)
+# shellcheck disable=SC2086 # one target a word
+deps -j1 ${tool_targets} > /build/tools.log 2>&1 || { tail -n 60 /build/tools.log >&2; exit 1; }
+# Each of them as the store now holds it: its inode, its times and its size.
+tools_state() {
+  while read -r file; do
+    [ -x "${file}" ] || { echo "hadolint: ${file}, an executable the build runs, is not in the store" >&2; return 1; }
+    stat -c '%i %Y %Z %s %n' "${file}"
+  done < /build/tools.files
+}
+tools_state > /build/tools.before
+# No process has one of them open for writing when the parallel build starts.
+# shellcheck disable=SC2012 # the listing's arrows are what is read
+ls -l /proc/[0-9]*/fd 2> /dev/null |
+  awk '/^\/proc\//{ split($0, a, "/"); pid = a[3] } / -> \//{ print pid, $(NF-2), $NF }' |
+  while read -r pid fd target; do
+    grep -q -x -F -- "${target}" /build/tools.files || continue
+    flags=$(sed -n 's/^flags:[[:space:]]*//p' "/proc/${pid}/fdinfo/${fd}" 2> /dev/null) || continue
+    case "${flags}" in *[1256]) echo "${pid} $(tr '\0' ' ' < "/proc/${pid}/cmdline" 2> /dev/null | cut -c1-120): ${target}" ;; esac
+  done > /build/tools.held
+[ ! -s /build/tools.held ] || {
+  echo "hadolint: a process holds an executable the build runs open for writing:" >&2
+  cat /build/tools.held >&2
+  exit 1
+}
+between=$(date +%s)
+deps --only-dependencies > /build/deps.log 2>&1 || { tail -n 60 /build/deps.log >&2; exit 1; }
+echo "dependencies: $((between - started)) s for ${tool_targets}one job at a time, $(($(date +%s) - between)) s for the rest"
 # The link writes its map: what the linker took, read below.
 cabal build --enable-executable-static --disable-executable-dynamic --disable-shared \
   --ghc-options='-split-sections -optl-static -optl-pthread -fPIC -optl-Wl,-Map=/build/link.map' exe:hadolint > /build/build.log 2>&1 || { tail -n 60 /build/build.log >&2; exit 1; }
 cp "$(cabal list-bin hadolint)" /out/hadolint
+# The parallel build and the link wrote none of the executables built first:
+# with none open for writing when it started, none was ever open for writing
+# while it ran one.
+tools_state > /build/tools.after
+cmp -s /build/tools.before /build/tools.after || {
+  echo "hadolint: an executable built first was written again by the parallel build (-: before, +: after):" >&2
+  diff /build/tools.before /build/tools.after >&2 || true
+  exit 1
+}
 strip /out/hadolint
 chmod 0755 /out/hadolint
 
