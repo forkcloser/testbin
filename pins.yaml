@@ -118,7 +118,7 @@ pins:
   # ships the generated parsers, so the build needs no bison or flex.
   - name: graphviz
     renovate: gitlab-releases graphviz/graphviz
-    version: 16.1.1
+    version: 16.1.2
     url: https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/${version}/graphviz-${version}.tar.gz
     verify: download
     digest:
