@@ -36,8 +36,8 @@ libbz2-1.0.8-r6
 libcrypto3-3.5.9-r0
 libcurl-8.23.0-r0
 libexpat-2.10.0-r0
-libffi-3.5.2-r1
-libffi-dev-3.5.2-r1
+libffi-3.8.1-r0
+libffi-dev-3.8.1-r0
 libformw-6.6_p20260516-r0
 libgcc-15.2.0-r5
 libgcc-static-15.2.0-r5
@@ -78,4 +78,4 @@ xz-libs-5.8.4-r0
 zlib-1.4-r0
 zlib-dev-1.4-r0
 zlib-static-1.4-r0
-zstd-libs-1.5.7-r2
+zstd-libs-1.6.0-r1
