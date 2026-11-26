@@ -6,7 +6,7 @@ pins (`v<version>`, sha256), linking [lz4](https://github.com/lz4/lz4) and
 built with the pinned zig for linux and windows, amd64 and arm64, and darwin arm64; `fsck.erofs` beside it
 on linux and darwin, where it builds.
 
-The build is configured as forkcloser/erofs's image-backed tests need it: lz4 and lz4hc, the
+The build is configured as forkcloser/go-erofs's image-backed tests need it: lz4 and lz4hc, the
 built-in deflate compressor, libdeflate, no other compression library (zlib, liblzma, libzstd),
 no libuuid, libselinux, curl, openssl, libxml2, json-c, liburing or fuse, and a maximum block size
 of 16 KiB on every platform. Multi-threaded compression is on except on windows.

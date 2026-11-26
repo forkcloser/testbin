@@ -3,7 +3,7 @@
  * macros so one file serves every target and a cross build probes nothing.
  * PACKAGE_VERSION comes from build.sh, which reads it from pins.yaml.
  *
- * The build is configured as forkcloser/erofs's was: lz4 and lz4hc on, the
+ * The build is configured as forkcloser/go-erofs's was: lz4 and lz4hc on, the
  * built-in deflate compressor (kite_deflate), libdeflate to read deflate
  * back, every other optional library off
  * (zlib, liblzma, libzstd, libuuid, libselinux, xxhash, curl,
@@ -14,7 +14,7 @@
 #define LZ4HC_ENABLED 1
 #define HAVE_LIBDEFLATE 1
 
-/* configure pins it from the build host's page size; forkcloser/erofs sets
+/* configure pins it from the build host's page size; forkcloser/go-erofs sets
  * MAX_BLOCK_SIZE=16384 so every platform's mkfs writes the same images. */
 #define EROFS_MAX_BLOCK_SIZE 16384
 
