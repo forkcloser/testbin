@@ -82,16 +82,19 @@ jobs:
   # tools nothing cross-compiles (hadolint, in a container), on a runner of
   # each linux architecture. The verify legs build their own platform and run
   # it (`just test`).
+  #
+  # Each group is built by two lanes at once, on two runners, from the same
+  # caches: `reproducible` holds the two to the same archives.
   build:
     needs: plan
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.plan.outputs.groups) }}
-    name: build (${{ matrix.name }})
-    runs-on: ${{ matrix.runner }}
-    # hadolint is a compiler's work, twice: built, then built again.
-    timeout-minutes: 60
+        group: ${{ fromJSON(needs.plan.outputs.groups) }}
+        lane: [build, rebuild]
+    name: ${{ matrix.lane }} (${{ matrix.group.name }})
+    runs-on: ${{ matrix.group.runner }}
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -100,58 +103,143 @@ jobs:
           persist-credentials: false
       - name: Install hermetic (pinned, verified)
         uses: ./.github/actions/setup-hermetic
-      # zig compiles its runtime libraries (compiler-rt, each target's libc,
-      # libc++) into its global cache on first use, which is most of a cold
-      # build. That directory alone is kept between runs, one entry a group
-      # and zig version: every source file is still compiled by every run.
-      # The release workflow keeps nothing and restores nothing.
-      - id: zig
-        name: The zig cache's key
+      # What a build fetches or compiles that its commit does not change is
+      # kept between runs: the archives pins.yaml names (each is verified
+      # against its sha256 on every use, kept or not), NuGet's packages, zig's
+      # runtime libraries (compiler-rt, each target's libc, libc++: most of a
+      # cold build), and for the Rust tools the toolchain the verify legs
+      # already keep. Every source file is still compiled by every run. The
+      # release workflow keeps nothing and restores nothing.
+      - id: keys
+        name: The caches' keys
         shell: bash
         env:
-          TOOLS: ${{ matrix.tools }}
+          TOOLS: ${{ matrix.group.tools }}
         run: |
+          rust=false
+          for tool in $TOOLS; do
+            if [ -f "${tool}/Cargo.toml" ]; then rust=true; fi
+          done
           {
-            echo "version=$(zig version)"
+            echo "zig=$(zig version)"
             echo "group=${TOOLS// /+}"
+            echo "rust=${rust}"
           } >> "$GITHUB_OUTPUT"
-      - id: cache
+          # Older than anything this run verifies: what is no newer when the
+          # build is done is an archive no pin names any more.
+          touch "$RUNNER_TEMP/started"
+      # Restored alone: the verify legs save it, on the default branch.
+      - if: steps.keys.outputs.rust == 'true'
+        uses: ./.github/actions/cache
+        with:
+          mode: restore
+          go: 'false'
+      - id: zig
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.LIMEN_BUILD }}/zig/global
-          key: zig-global-${{ runner.os }}-${{ runner.arch }}-${{ steps.zig.outputs.version }}-${{ steps.zig.outputs.group }}
-      - name: Build the group for every platform
+          key: zig-global-${{ runner.os }}-${{ runner.arch }}-${{ steps.keys.outputs.zig }}-${{ steps.keys.outputs.group }}
+      # A changed pin restores the last entry and fetches what moved alone.
+      - id: downloads
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ env.LIMEN_BUILD }}/src/*.tar.gz
+            ${{ env.LIMEN_BUILD }}/src/*.tar.xz
+            ${{ env.LIMEN_BUILD }}/src/*.zip
+            ${{ env.LIMEN_BUILD }}/nuget
+          key: project-downloads-${{ runner.os }}-${{ runner.arch }}-${{ steps.keys.outputs.group }}-${{ hashFiles('pins.yaml', '**/packages.lock.json', 'flake/locks/*.lock.json') }}
+          restore-keys: |
+            project-downloads-${{ runner.os }}-${{ runner.arch }}-${{ steps.keys.outputs.group }}-
+      - name: Build the group
         shell: bash
         env:
-          TOOLS: ${{ matrix.tools }}
+          TOOLS: ${{ matrix.group.tools }}
         run: |
           read -r -a tools <<< "$TOOLS"
           just build-group "${tools[@]}"
-      # Again from the commit alone, in another directory, with no cache: the
-      # archives are the ones above, byte for byte, as a release's must be for
-      # anyone to check it by building it.
-      - name: Build the group again elsewhere, to the same bytes
+      - name: The archives' checksums
         shell: bash
         env:
-          TOOLS: ${{ matrix.tools }}
+          LANE: ${{ matrix.lane }}
+          INDEX: ${{ strategy.job-index }}
         run: |
-          read -r -a tools <<< "$TOOLS"
-          just rebuild "${tools[@]}"
-      # The default branch only, and only on a miss: an entry a pull request
-      # run saves is restorable by that pull request alone, and a key is
-      # never overwritten.
-      - if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.cache.outputs.cache-hit != 'true'
+          mkdir -p "$RUNNER_TEMP/sums"
+          (cd "$LIMEN_BUILD/dist" && sha256sum -- *.tar.gz) | tee "$RUNNER_TEMP/sums/$LANE-$INDEX"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sums-${{ matrix.lane }}-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/sums
+          if-no-files-found: error
+          retention-days: 1
+      # The archives themselves, for a day: when the two lanes differ, the
+      # checksums say which archive and these say where in it.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-${{ matrix.lane }}-${{ strategy.job-index }}
+          path: ${{ env.LIMEN_BUILD }}/dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+      # The default branch only, only on a miss, and from one lane: an entry a
+      # pull request run saves is restorable by that pull request alone, and a
+      # key is never overwritten.
+      - if: matrix.lane == 'build' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.zig.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.LIMEN_BUILD }}/zig/global
-          key: ${{ steps.cache.outputs.cache-primary-key }}
+          key: ${{ steps.zig.outputs.cache-primary-key }}
+      - if: matrix.lane == 'build' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.downloads.outputs.cache-hit != 'true'
+        name: Drop the archives no pin names any more
+        shell: bash
+        run: |
+          if [ -d "$LIMEN_BUILD/src" ]; then
+            find "$LIMEN_BUILD/src" -maxdepth 1 -type f ! -newer "$RUNNER_TEMP/started" -print -delete
+          fi
+      - if: matrix.lane == 'build' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.downloads.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ env.LIMEN_BUILD }}/src/*.tar.gz
+            ${{ env.LIMEN_BUILD }}/src/*.tar.xz
+            ${{ env.LIMEN_BUILD }}/src/*.zip
+            ${{ env.LIMEN_BUILD }}/nuget
+          key: ${{ steps.downloads.outputs.cache-primary-key }}
+
+  # The two lanes' archives, one against the other: a published archive can be
+  # checked by building it only if a build of its commit gives the same bytes.
+  reproducible:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: sums-*
+          path: sums
+          merge-multiple: true
+      - name: The two lanes built the same archives
+        shell: bash
+        run: |
+          export LC_ALL=C
+          cat sums/build-* | sort -k 2 > build
+          cat sums/rebuild-* | sort -k 2 > rebuild
+          if [ ! -s build ]; then
+            echo "::error::no archive to compare: the build lane uploaded no checksum"
+            exit 1
+          fi
+          if ! diff build rebuild; then
+            echo "::error::the two lanes did not build the same archives (<: build, >: rebuild)"
+            exit 1
+          fi
+          cat build
 
   # The ONE required status check (defaultRequiredChecks in
   # internal/github/audit.go). Requiring the lanes by name would bake the
   # runner list into every ruleset; this job collapses them to one stable
   # name. A project job joins `needs` and the assertion below.
   gate:
-    needs: [limen, plan, build]
+    needs: [limen, plan, build, reproducible]
     # always(), and the result asserted explicitly. Without always() a failed
     # or cancelled dependency SKIPS this job instead of failing it, and a
     # skipped required check does not block a merge — branch protection that
@@ -169,7 +257,8 @@ jobs:
           LIMEN: ${{ needs.limen.result }}
           PLAN: ${{ needs.plan.result }}
           BUILD: ${{ needs.build.result }}
+          REPRODUCIBLE: ${{ needs.reproducible.result }}
         shell: bash
         run: |
-          printf 'limen: %s\nplan: %s\nbuild: %s\n' "$LIMEN" "$PLAN" "$BUILD"
-          [ "$LIMEN" = "success" ] && [ "$PLAN" = "success" ] && [ "$BUILD" = "success" ]
+          printf 'limen: %s\nplan: %s\nbuild: %s\nreproducible: %s\n' "$LIMEN" "$PLAN" "$BUILD" "$REPRODUCIBLE"
+          [ "$LIMEN" = "success" ] && [ "$PLAN" = "success" ] && [ "$BUILD" = "success" ] && [ "$REPRODUCIBLE" = "success" ]

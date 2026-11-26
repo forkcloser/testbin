@@ -44,9 +44,12 @@ sources, and states the upstream licence its sources, patches and binaries are u
 - **Every binary runs where it ships.** CI builds each platform and runs it on that platform's
   runner (`just test`); the release workflow runs the published archives themselves on all five
   platforms before attaching them.
-- **A build is its commit's.** Built again from the same commit, in another directory and at
+- **A build is its commit's.** Built again from the same commit, on another machine and at
   another time, every archive is the same bytes, so a published one can be checked by building
-  it: `just build-group <tools>`, then `just rebuild <tools>`, which CI runs for every group.
+  it. CI builds every group twice, on two runners at once, and compares the archives' checksums
+  (the `reproducible` job). The two share a checkout path and restore the same caches (zig's
+  compiled runtime libraries among them), so a path that reached a binary, or something a cache
+  carried into one, would not show there; a release is built with no cache.
   (`hadolint` for as long as Alpine serves the packages its lock names: after that its build
   stops, and says which moved.)
   Nothing of the build is recorded. The binaries carry no debug information and no symbols (they
@@ -78,7 +81,6 @@ notes link it, and the patches a tool's directory applies, at the release's tag.
 ```sh
 just build              # every tool, every platform, into .build/dist
 just build-group xz     # the named tools, every platform (the workflows build one group of tools a runner)
-just rebuild xz         # build them again elsewhere from the commit: the archives are the same bytes
 just flac darwin-arm64  # one tool, the given platforms (also: just drflac, flake, erofs, xz, graphviz, claxon, symphonia …)
 just test               # each tool for this host, then run on it
 just converge           # rewrite the NuGet lock files, after a .NET SDK, CSCore or CUETools bump

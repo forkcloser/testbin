@@ -33,7 +33,7 @@ and how each is held:
   it breaks, and the licence files beside it.
 
 Two builds of one commit give the same bytes, while alpine serves the locked packages: the
-build job builds it twice and compares.
+two build lanes each build it, and their archives are compared.
 
 ## Licence
 
