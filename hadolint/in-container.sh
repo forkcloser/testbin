@@ -34,6 +34,48 @@ tar -xJf /in/ghc.tar.xz -C /build/ghc --strip-components=1
   { tail -n 30 /build/ghc-configure.log /build/ghc-install.log >&2; exit 1; }
 tar -xJf /in/cabal.tar.xz -C /usr/local/bin
 export PATH="/opt/ghc/bin:${PATH}"
+
+# GHC links hadolint's libraries in the order it met them, which is the order
+# of each package database's cache, which is the order ghc-pkg was handed the
+# database's directory in: the file system's, another on another machine
+# (ext4 hashes names with a seed of its own), and for cabal's store the order
+# a parallel build finished in. Two libraries neither of which needs the
+# other then change places in the binary. So each database's cache is written
+# again from a directory that lists its files in the order of their names.
+# No file system promises that order: one that lists files as they were made
+# (tmpfs since Linux 6.6) or the other way round (before) gives it when the
+# files are made in the right order, so both are tried and the listing is
+# read back; where neither gives it the build stops.
+ordered_db() {
+  db=$1
+  [ -d "${db}" ] || { echo "hadolint: no package database at ${db}" >&2; exit 1; }
+  scratch=/tmp
+  [ ! -d /dev/shm ] || scratch=/dev/shm
+  ordered="${scratch}/ordered-db"
+  find "${db}" -maxdepth 1 -name '*.conf' | sort > /build/db.confs
+  [ -s /build/db.confs ] || { echo "hadolint: no package in ${db}" >&2; exit 1; }
+  sed 's|.*/||' /build/db.confs > /build/db.names
+  for made in first-first last-first; do
+    rm -rf "${ordered}"
+    mkdir "${ordered}"
+    if [ "${made}" = first-first ]; then cat /build/db.confs; else sort -r /build/db.confs; fi |
+      while read -r conf; do
+        cp "${conf}" "${ordered}/"
+      done
+    find "${ordered}" -name '*.conf' | sed 's|.*/||' > /build/db.listed
+    ! cmp -s /build/db.names /build/db.listed || break
+    rm -rf "${ordered}"
+  done
+  [ -d "${ordered}" ] || {
+    echo "hadolint: ${scratch} lists files neither in the order they are made nor in the reverse: no package database can be given one order here, and the binary would not be the one another machine builds" >&2
+    exit 1
+  }
+  ghc-pkg recache --package-db "${ordered}" > /dev/null
+  cp "${ordered}/package.cache" "${db}/package.cache"
+  rm -rf "${ordered}"
+  sha256sum "${db}/package.cache" | cut -c1-16
+}
+global_db=$(ordered_db "$(ghc --print-global-package-db)")
 echo "toolchain: $(ghc --numeric-version), $(cabal --numeric-version)"
 
 cp -R /in/src/. /build/src/
@@ -117,6 +159,11 @@ ls -l /proc/[0-9]*/fd 2> /dev/null |
 }
 between=$(date +%s)
 deps --only-dependencies > /build/deps.log 2>&1 || { tail -n 60 /build/deps.log >&2; exit 1; }
+store_db=$(find /build/cabal/store -mindepth 2 -maxdepth 2 -name package.db)
+[ "$(echo "${store_db}" | wc -l)" -eq 1 ] || { echo "hadolint: not one package database in cabal's store: ${store_db}" >&2; exit 1; }
+# The same on every machine that builds this commit, or the binary is not.
+store_db=$(ordered_db "${store_db}")
+echo "package databases: GHC's ${global_db}, cabal's store's ${store_db}"
 echo "dependencies: $((between - started)) s for ${tool_targets}one job at a time, $(($(date +%s) - between)) s for the rest"
 # The link writes its map: what the linker took, read below.
 cabal build --enable-executable-static --disable-executable-dynamic --disable-shared \
