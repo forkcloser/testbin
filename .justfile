@@ -14,7 +14,7 @@ platforms := "linux-amd64 linux-arm64 darwin-arm64 windows-amd64 windows-arm64"
 # side, one runner a group, `|` between groups. The tools of a group share a
 # toolchain to fetch (the .NET SDK, the Rust toolchain) or are too small for
 # a runner of their own. A tool missing here is built by nothing.
-build_groups := "flac|microflac|xz|erofs|graphviz|drflac foxenflac|flake cscoreflac|claxon symphonia"
+build_groups := "flac microflac drflac foxenflac|xz erofs graphviz|flake cscoreflac|claxon symphonia"
 
 # The tools no runner cross-compiles, in groups as above: each is built on a
 # runner of every architecture it has a platform for, for that runner's own
@@ -40,37 +40,6 @@ build-group +tools:
     for tool in "$@"; do
         just "${tool}" {{ platforms }}
     done
-
-# Build the named tools again, from the commit alone, in another directory
-# and with nothing kept from the build here, and hold every archive to the one
-# `just build-group` made of them: the same bytes, or the build is not
-# reproducible. The commit is what is built again, so the tree has to be it.
-rebuild +tools:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-        echo "the tree has changes the commit does not: commit them, the rebuild is of the commit." >&2
-        exit 1
-    fi
-    again="${LIMEN_BUILD}/again/in-another-directory/testbin"
-    rm -rf "${LIMEN_BUILD}/again"
-    mkdir -p "${again}"
-    git archive --format=tar HEAD | tar -xf - -C "${again}"
-    (cd "${again}" && just build-group {{ tools }})
-    failed=0
-    for archive in "${again}"/.build/dist/*.tar.gz; do
-        name=${archive##*/}
-        if [ ! -f "${LIMEN_BUILD}/dist/${name}" ]; then
-            echo "${name}: built again, and not built here: run 'just build-group {{ tools }}' first." >&2
-            failed=1
-        elif ! cmp -s "${archive}" "${LIMEN_BUILD}/dist/${name}"; then
-            echo "${name}: not the same bytes when built again." >&2
-            failed=1
-        else
-            echo "${name}: the same bytes, sha256 $(sha256sum "${archive}" | cut -d' ' -f1)"
-        fi
-    done
-    exit "${failed}"
 
 # The groups as the JSON array a workflow's matrix reads, one object a build:
 # its tools, the runner that builds them, and the name the two make. A group
@@ -571,12 +540,17 @@ _dotnet:
     if [ ! -x "${root}/dotnet" ] && [ ! -x "${root}/dotnet.exe" ]; then
         archive="${LIMEN_BUILD}/src/${url##*/}"
         mkdir -p "${LIMEN_BUILD}/src"
+        # As _fetch-file: a kept archive of other bytes is fetched again, once.
+        if [ -f "${archive}" ] && ! echo "${sum}  ${archive}" | sha256sum -c - > /dev/null 2>&1; then
+            rm -f "${archive}"
+        fi
         [ -f "${archive}" ] || curl -fsSL --retry 3 -o "${archive}" "${url}"
         if ! echo "${sum}  ${archive}" | sha256sum -c - > /dev/null; then
             echo "${archive}: sha256 does not match pins.yaml's ${pin} ${version}" >&2
             rm -f "${archive}"
             exit 1
         fi
+        touch "${archive}"
         rm -rf "${root}"
         mkdir -p "${root}"
         case "${archive}" in
@@ -640,7 +614,7 @@ hadolint +targets: (_fetch "hadolint")
         HADOLINT_COMMIT="${version}" HADOLINT_URL="$(limen pins get hadolint url)" hadolint/build.sh "${src}" \
             "${LIMEN_BUILD}/src/ghc-${platform}-$(limen pins get "ghc-${platform}" version).tar.xz" \
             "${LIMEN_BUILD}/src/cabal-${platform}-$(limen pins get "cabal-${platform}" version).tar.xz" \
-            "${arch}" "${out}/bin"
+            "${arch}" "${out}/bin" "${LIMEN_BUILD}/kept/hadolint/${platform}"
         # Run where it was built, which is always here: no leg of `just test`
         # pays for a compiler's build to do it.
         hadolint/smoke.sh "${out}/bin"
@@ -653,7 +627,18 @@ hadolint +targets: (_fetch "hadolint")
         scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
-# Build hadolint for this host, where it is a linux one, and run it.
+# What hadolint's kept directory is a function of, for the key CI keeps it
+# under: the pins and every file of the recipe. A workflow asks each tool of a
+# group for `<tool>-kept`, and keeps $LIMEN_BUILD/kept for those that answer.
+hadolint-kept:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    for pin in hadolint "ghc-${platform}" "cabal-${platform}"; do
+        echo "${pin} $(limen pins get "${pin}" version) $(limen pins get "${pin}" sha256)"
+    done
+    git ls-files -z hadolint | xargs -0 sha256sum
+
 hadolint-test:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -733,12 +718,21 @@ _fetch-file name:
     dir="${LIMEN_BUILD}/src"
     archive="${dir}/{{ name }}-${version}.${ext}"
     mkdir -p "${dir}"
+    # A kept archive of other bytes (CI's cache, when a pin's sha256 moved under
+    # one file name; a download cut short) is fetched again, once: left there,
+    # every run would restore it and fail on it.
+    if [ -f "${archive}" ] && ! echo "${sum}  ${archive}" | sha256sum -c - > /dev/null 2>&1; then
+        rm -f "${archive}"
+    fi
     [ -f "${archive}" ] || curl -fsSL --retry 3 -o "${archive}" "${url}"
     if ! echo "${sum}  ${archive}" | sha256sum -c - > /dev/null; then
         echo "${archive}: sha256 does not match pins.yaml's {{ name }} ${version}" >&2
         rm -f "${archive}"
         exit 1
     fi
+    # A kept archive (CI's cache) is as old as its download: one no run
+    # verifies any more is told from the others by its time.
+    touch "${archive}"
 
 # The rustc flags that keep the build out of a Rust binary, as
 # CARGO_ENCODED_RUSTFLAGS takes them. Its directories: the checkout, cargo's

@@ -33,7 +33,13 @@ and how each is held:
   it breaks, and the licence files beside it.
 
 Two builds of one commit give the same bytes, while alpine serves the locked packages: the
-build job builds it twice and compares.
+two build lanes each build it, and their archives are compared.
+
+What the build fetches and compiles that is not hadolint's own (alpine's packages, cabal's index,
+the Hackage archives and the compiled dependencies) goes to a kept directory,
+`$LIMEN_BUILD/kept/hadolint/<platform>`: a second build of the same inputs compiles hadolint
+alone. CI keeps it between runs under a key of the pins and every file here
+(`just hadolint-kept`); a release starts with none.
 
 ## Licence
 
