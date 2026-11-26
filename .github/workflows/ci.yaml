@@ -120,10 +120,22 @@ jobs:
           for tool in $TOOLS; do
             if [ -f "${tool}/Cargo.toml" ]; then rust=true; fi
           done
+          # A tool whose build keeps a directory of its own says what that
+          # directory is a function of (`just <tool>-kept`).
+          kept=""
+          for tool in $TOOLS; do
+            if [ -n "$(just --summary | tr ' ' '\n' | grep -x -F -- "${tool}-kept" || true)" ]; then
+              kept="${kept}$(just "${tool}-kept")"
+            fi
+          done
+          if [ -n "${kept}" ]; then
+            kept=$(printf '%s' "${kept}" | sha256sum | cut -d ' ' -f 1)
+          fi
           {
             echo "zig=$(zig version)"
             echo "group=${TOOLS// /+}"
             echo "rust=${rust}"
+            echo "kept=${kept}"
           } >> "$GITHUB_OUTPUT"
           # Older than anything this run verifies: what is no newer when the
           # build is done is an archive no pin names any more.
@@ -151,6 +163,16 @@ jobs:
           key: project-downloads-${{ runner.os }}-${{ runner.arch }}-${{ steps.keys.outputs.group }}-${{ hashFiles('pins.yaml', '**/packages.lock.json', 'flake/locks/*.lock.json') }}
           restore-keys: |
             project-downloads-${{ runner.os }}-${{ runner.arch }}-${{ steps.keys.outputs.group }}-
+      # What a tool's own build keeps (hadolint: alpine's packages, cabal's
+      # index, source archives and compiled dependencies, ten of its twelve
+      # minutes). The exact key alone: a directory filled under other inputs
+      # is not this build's.
+      - id: kept
+        if: steps.keys.outputs.kept != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.LIMEN_BUILD }}/kept
+          key: project-kept-${{ runner.os }}-${{ runner.arch }}-${{ steps.keys.outputs.group }}-${{ steps.keys.outputs.kept }}
       - name: Build the group
         shell: bash
         env:
@@ -204,6 +226,11 @@ jobs:
             ${{ env.LIMEN_BUILD }}/src/*.zip
             ${{ env.LIMEN_BUILD }}/nuget
           key: ${{ steps.downloads.outputs.cache-primary-key }}
+      - if: matrix.lane == 'build' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.keys.outputs.kept != '' && steps.kept.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.LIMEN_BUILD }}/kept
+          key: ${{ steps.kept.outputs.cache-primary-key }}
 
   # The two lanes' archives, one against the other: a published archive can be
   # checked by building it only if a build of its commit gives the same bytes.

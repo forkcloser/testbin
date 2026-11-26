@@ -614,7 +614,7 @@ hadolint +targets: (_fetch "hadolint")
         HADOLINT_COMMIT="${version}" HADOLINT_URL="$(limen pins get hadolint url)" hadolint/build.sh "${src}" \
             "${LIMEN_BUILD}/src/ghc-${platform}-$(limen pins get "ghc-${platform}" version).tar.xz" \
             "${LIMEN_BUILD}/src/cabal-${platform}-$(limen pins get "cabal-${platform}" version).tar.xz" \
-            "${arch}" "${out}/bin"
+            "${arch}" "${out}/bin" "${LIMEN_BUILD}/kept/hadolint/${platform}"
         # Run where it was built, which is always here: no leg of `just test`
         # pays for a compiler's build to do it.
         hadolint/smoke.sh "${out}/bin"
@@ -627,7 +627,18 @@ hadolint +targets: (_fetch "hadolint")
         scripts/archive.sh "${LIMEN_BUILD}/stage" "${name}" "${LIMEN_BUILD}/dist"
     done
 
-# Build hadolint for this host, where it is a linux one, and run it.
+# What hadolint's kept directory is a function of, for the key CI keeps it
+# under: the pins and every file of the recipe. A workflow asks each tool of a
+# group for `<tool>-kept`, and keeps $LIMEN_BUILD/kept for those that answer.
+hadolint-kept:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    platform=$(just _host-platform)
+    for pin in hadolint "ghc-${platform}" "cabal-${platform}"; do
+        echo "${pin} $(limen pins get "${pin}" version) $(limen pins get "${pin}" sha256)"
+    done
+    git ls-files -z hadolint | xargs -0 sha256sum
+
 hadolint-test:
     #!/usr/bin/env bash
     set -euo pipefail

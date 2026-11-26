@@ -13,7 +13,7 @@ url=${HADOLINT_URL:?the pinned hadolint source url}
 # so every package the container then holds is compared with
 # hadolint/apk.lock, the linker and the assembler as much as the libraries,
 # and the build stops when alpine has moved one.
-apk add --no-cache \
+apk add --cache-dir /kept/apk \
   curl gcc g++ ncurses-dev libffi-dev make xz gzip tar perl git jq \
   binutils-gold zlib zlib-dev zlib-static gmp gmp-dev gmp-static \
   ncurses-static libc-dev musl-dev > /dev/null
@@ -82,10 +82,10 @@ jq -r '
   dist-newstyle/cache/plan.json > /build/tools.plan
 sort -u /build/tools.plan > /build/tools
 # The plan this repository froze runs alex: a list with nothing in it is a
-# plan that was not read, or a store that already held the tools (a unit
-# cabal need not build is not "configured"), and the checks below would pass
-# on nothing.
-[ -s /build/tools ] || { echo "hadolint: the plan names no executable to build first, in a store that starts empty" >&2; exit 1; }
+# plan that was not read, and the checks below would pass on nothing. A kept
+# store that already holds the tools changes nothing here: the plan is written
+# before cabal looks at its store, and building what is built does nothing.
+[ -s /build/tools ] || { echo "hadolint: the plan names no executable to build first" >&2; exit 1; }
 # Fully qualified: cabal reads the shorter "alex:exe:alex" two ways and stops.
 tool_targets=$(awk -F '\t' '{ printf ":pkg:%s:%s ", $1, $2 }' /build/tools)
 awk -F '\t' '$3 == "" { print "hadolint: the plan names no file for " $1 " " $2 > "/dev/stderr"; bad = 1 } END { exit bad }' /build/tools
@@ -274,3 +274,7 @@ cp /in/recipe/licenses/LICENSE-lgpl-3.0 /out/COPYING.LESSER
       END { if (!found) exit 1 }' /lib/apk/db/installed || { echo "hadolint: ${package} is not installed" >&2; exit 1; }
   done
 } > /out/SOURCE
+
+# The kept directory is written here as root and read outside as whoever runs
+# the container.
+chmod -R a+rX /kept/apk /build/cabal
