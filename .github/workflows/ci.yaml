@@ -180,7 +180,8 @@ jobs:
         run: |
           read -r -a tools <<< "$TOOLS"
           just build-group "${tools[@]}"
-      - name: The archives' checksums
+      - id: built
+        name: The archives' checksums
         shell: bash
         env:
           LANE: ${{ matrix.lane }}
@@ -188,6 +189,8 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/sums"
           (cd "$LIMEN_BUILD/dist" && sha256sum -- *.tar.gz) | tee "$RUNNER_TEMP/sums/$LANE-$INDEX"
+          # A group zig built nothing of (hadolint) has no cache of it to save.
+          if [ -d "$LIMEN_BUILD/zig/global" ]; then echo "zig=true" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sums-${{ matrix.lane }}-${{ strategy.job-index }}
@@ -205,7 +208,7 @@ jobs:
       # The default branch only, only on a miss, and from one lane: an entry a
       # pull request run saves is restorable by that pull request alone, and a
       # key is never overwritten.
-      - if: matrix.lane == 'build' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.zig.outputs.cache-hit != 'true'
+      - if: matrix.lane == 'build' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.zig.outputs.cache-hit != 'true' && steps.built.outputs.zig == 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.LIMEN_BUILD }}/zig/global
