@@ -55,4 +55,4 @@ libdeflate under MIT (`LICENSE.libdeflate`). Each release archive carries these 
 erofs-utils' library and are under the same terms, GPL-2.0-or-later or MIT. The corresponding
 source is upstream's release tarballs, pinned in `pins.yaml` (url and sha256), with `patches/`
 and `mingw-compat/` at the release's tag. This directory's other files are under the
-repository's Apache-2.0 licence.
+repository's MIT licence.

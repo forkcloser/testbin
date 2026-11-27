@@ -3,7 +3,7 @@ name = "testbin-claxon"
 description = "A FLAC decoder on Claxon"
 version = "0.0.0"
 edition = "2024"
-license = "Apache-2.0"
+license = "MIT"
 publish = false
 
 [[bin]]

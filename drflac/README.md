@@ -24,4 +24,4 @@ any error.
 
 dr_flac is upstream's, available as public domain (the Unlicense) or MIT No Attribution, its
 choice; each release archive carries dr_libs' `LICENSE` as `LICENSE.dr_libs`. `main.c` and this
-directory's other files are under the repository's Apache-2.0 licence, carried as `LICENSE`.
+directory's other files are under the repository's MIT licence, carried as `LICENSE`.

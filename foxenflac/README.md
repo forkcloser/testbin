@@ -31,4 +31,4 @@ libfoxenflac is upstream's, under the GNU LGPL version 2.1; each release archive
 `LICENSE` as `LICENSE.libfoxenflac`. The binary links it statically: the corresponding source is
 upstream's tarball of the pinned commit (`pins.yaml`, url and sha256) with this directory at the
 release's tag, everything needed to rebuild it against a modified library. `main.c` and this
-directory's other files are under the repository's Apache-2.0 licence, carried as `LICENSE`.
+directory's other files are under the repository's MIT licence, carried as `LICENSE`.

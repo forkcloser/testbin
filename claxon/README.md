@@ -27,5 +27,5 @@ stream info, so a 32-bit stream, or one of a depth without a code of its own, do
 Claxon is upstream's, under the Apache License 2.0; each release archive carries its `license`
 file as `LICENSE.claxon`. The corresponding source is the crate on crates.io,
 `https://static.crates.io/crates/claxon/claxon-<version>.crate`, the checksum `Cargo.lock`
-records. `src/main.rs` and this directory's other files are under the repository's Apache-2.0
+records. `src/main.rs` and this directory's other files are under the repository's MIT
 licence, carried as `LICENSE`.

@@ -31,4 +31,4 @@ STREAMINFO declares included.
 microFLAC is upstream's, under the Apache License 2.0; each release archive carries its `LICENSE`
 as `LICENSE.microflac`. The corresponding source is upstream's release tarball, pinned in
 `pins.yaml` (url and sha256). `main.cpp` and this directory's other files are under the
-repository's Apache-2.0 licence, carried as `LICENSE`.
+repository's MIT licence, carried as `LICENSE`.

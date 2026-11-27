@@ -34,4 +34,4 @@ the Flake codec library under the GNU LGPL version 2.1 (`COPYING`, the licence's
 Newtonsoft.Json under the MIT licence (`LICENSE.Newtonsoft.Json.md`). Each release archive
 carries the four. The corresponding source is upstream's release tarball, pinned in `pins.yaml`
 (url and sha256): `https://github.com/gchudov/cuetools.net/archive/refs/tags/v<version>.tar.gz`.
-This directory's own files are under the repository's Apache-2.0 licence.
+This directory's own files are under the repository's MIT licence.
