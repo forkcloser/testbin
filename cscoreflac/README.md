@@ -46,5 +46,5 @@ does not let a program catch; the process dies, with a nonzero exit status.
 CSCore is upstream's, under the Microsoft Public License (`license.md`, carried in each release
 archive as `LICENSE.cscore.md`). The corresponding source is upstream's release tarball, pinned
 in `pins.yaml` (url and sha256). `Program.cs` and this directory's other files are under the
-repository's Apache-2.0 licence, carried as `LICENSE`; the two helpers in `Compat.cs` reproduce
+repository's MIT licence, carried as `LICENSE`; the two helpers in `Compat.cs` reproduce
 upstream's (CSCore 1.2.1.2, `Extensions.cs`) and are under its licence.

@@ -217,12 +217,12 @@ gcc=$(version_of gcc)
 } > /build/notices.parts
 {
   echo "The corresponding source of this hadolint binary. It is statically linked:"
-  echo "every component below is in it. Built by forkcloser/testbin, whose recipe"
+  echo "every component below is in it. Built by packcloser/testbin, whose recipe"
   echo "(hadolint/, at the tag of the release this archive belongs to) builds it"
   echo "again from these sources, to the same bytes for as long as Alpine serves"
   echo "the packages hadolint/apk.lock names, and against another GMP by moving"
   echo "that file's gmp lines and hadolint/apk-linked's:"
-  echo "  https://github.com/forkcloser/testbin"
+  echo "  https://github.com/packcloser/testbin"
 } > /build/source.head
 echo "  and the libffi its runtime links (libffi-tarballs/ in the same archive)," > /build/source.ghc
 {

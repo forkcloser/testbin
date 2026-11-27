@@ -73,4 +73,4 @@ links it. Each archive carries:
   libraries it is linked against, which are not in it. The three files are written by
   `notices.sh` for every platform, from what each platform's build hands it.
 
-This directory's own files are under the repository's Apache-2.0 licence.
+This directory's own files are under the repository's MIT licence.

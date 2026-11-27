@@ -35,4 +35,4 @@ linked crate's licence files under `licences/<crate>-<version>/`, the closure `C
 records (`just _crate-closure testbin-symphonia`). The corresponding source is those crates on
 crates.io, `https://static.crates.io/crates/<crate>/<crate>-<version>.crate`, at the checksums
 `Cargo.lock` records. `src/main.rs` and this directory's other files are under the
-repository's Apache-2.0 licence, carried as `LICENSE`.
+repository's MIT licence, carried as `LICENSE`.

@@ -24,4 +24,4 @@ License (`COPYING`, `COPYING.0BSD`). Each release archive carries `COPYING`, `CO
 upstream's `AUTHORS`. The corresponding source is upstream's release tarball, pinned in
 `pins.yaml` (url and sha256):
 `https://github.com/tukaani-project/xz/releases/download/v<version>/xz-<version>.tar.xz`. This
-directory's own files are under the repository's Apache-2.0 licence.
+directory's own files are under the repository's MIT licence.
