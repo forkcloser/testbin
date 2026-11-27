@@ -119,10 +119,10 @@ gmp=$(awk '$1 == "#define" && $2 ~ /^__GNU_MP_VERSION(_MINOR|_PATCHLEVEL)?$/ { v
 : > "${root}/notices.parts"
 {
   echo "The corresponding source of this hadolint binary: every component below"
-  echo "is in it. Built by forkcloser/testbin, whose recipe (hadolint/, at the"
+  echo "is in it. Built by packcloser/testbin, whose recipe (hadolint/, at the"
   echo "tag of the release this archive belongs to) builds it again from these"
   echo "sources on macOS, and against another GMP with a GHC built against it:"
-  echo "  https://github.com/forkcloser/testbin"
+  echo "  https://github.com/packcloser/testbin"
 } > "${root}/source.head"
 echo "  and the GMP ${gmp} its integers are built on (libraries/ghc-bignum/gmp/gmp-tarballs/ in the same archive)," > "${root}/source.ghc"
 {
