@@ -79,8 +79,8 @@ jobs:
 
   # Every tool for every platform, cross-built on linux hosts with the pinned
   # zig, one runner a group of tools, the way a release builds them; and the
-  # tools nothing cross-compiles (hadolint, in a container), on a runner of
-  # each linux architecture. The verify legs build their own platform and run
+  # tools nothing cross-compiles (hadolint), on a runner of each platform they
+  # have. The verify legs build their own platform and run
   # it (`just test`).
   #
   # Each group is built by two lanes at once, on two runners, from the same
@@ -94,7 +94,8 @@ jobs:
         lane: [build, rebuild]
     name: ${{ matrix.lane }} (${{ matrix.group.name }})
     runs-on: ${{ matrix.group.runner }}
-    timeout-minutes: 30
+    # hadolint with nothing kept is a compiler's work: its 97 dependencies.
+    timeout-minutes: 90
     permissions:
       contents: read
     steps:

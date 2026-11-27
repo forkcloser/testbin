@@ -234,6 +234,15 @@ pins:
       version: 9.10.2
       source: 70ae9e56ea34752d2939191c2571b9824b440db5ed814b9fc39076a614ebacac
       sha256: 15fd860629276fb0119a6a0d9061e5af5d6d81230a2b88fc43498e937b5006e2
+  - name: ghc-darwin-arm64
+    renovate: manual
+    version: 9.10.2
+    url: https://downloads.haskell.org/~ghc/${version}/ghc-${version}-aarch64-apple-darwin.tar.xz
+    verify: pgp-detached https://downloads.haskell.org/~ghc/${version}/ghc-${version}-aarch64-apple-darwin.tar.xz.sig https://keys.openpgp.org/vks/v1/by-fingerprint/88B57FCF7DB53B4DB3BFA4B1588764FBE22D19C4 88B57FCF7DB53B4DB3BFA4B1588764FBE22D19C4
+    digest:
+      version: 9.10.2
+      source: d935e3a2aadc9db0333814b0c3c12189c2247bd75f6965994447597661db495f
+      sha256: a236cfc42ea7280a691dc595313bd6b87efc4bd1c43dfe96b22194108fd81c1c
   # cabal-install, static binaries. Its release signs the SHA256SUMS file
   # with a detached signature and no tarball, which no verify method reads:
   # TLS is the guarantee.
@@ -255,3 +264,12 @@ pins:
       version: 3.18.2.0
       source: 356508e8ce1be0065b75c0bc76514dab3998f71ac65a4d81c414903c79323e9e
       sha256: e4d940131ab0b78943a4b5ce64a9ef5acc452ea849df197787eaeecb1c3bf276
+  - name: cabal-darwin-arm64
+    renovate: manual
+    version: 3.18.2.0
+    url: https://downloads.haskell.org/~cabal/cabal-install-${version}/cabal-install-${version}-aarch64-apple-darwin.tar.xz
+    verify: download
+    digest:
+      version: 3.18.2.0
+      source: 5db4510e8a981dbecc5667ad8c6e8f6e34525da3f69ca8280a2fba254b0a802d
+      sha256: d91f76cf9539d927205858c42d0c1fe3868dea89f54a5dd6151f9c3fdd56f21f

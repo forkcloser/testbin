@@ -198,99 +198,23 @@ cmp -s /build/linked.named /build/linked.measured || {
   exit 1
 }
 
-# What the binary is made of, from the build's own plan: the libraries the
-# executable depends on, and theirs, to the end; GHC's (pre-existing) and
-# Hackage's (configured). The plan also holds what only the tests need, the
-# tools that run during the build, and what a package's own Setup needs,
-# none of which is linked: of a package cabal builds whole, the libraries'
-# dependencies alone are followed.
-tab=$(printf '\t')
-# shellcheck disable=SC2016 # jq's variables, not the shell's
-jq -r '
-  ."install-plan" as $plan
-  | ($plan | map({key: .id, value: .}) | from_entries) as $unit
-  | def close: . as $seen
-      | ([$seen[] | $unit[.] | ((.depends // []) + [(.components // {}) | to_entries[] | select(.key == "lib" or (.key | startswith("lib:"))) | (.value.depends // [])[]])[]] + $seen | unique) as $next
-      | if ($next | length) == ($seen | length) then $seen else ($next | close) end;
-  [$plan[] | select(."pkg-name" == "hadolint" and ."component-name" == "exe:hadolint") | .id]
-  | if length == 0 then error("no exe:hadolint in the plan") else . end
-  | close | .[] | $unit[.] | select(."pkg-name" != "hadolint")
-  | [.type, ."pkg-name", ."pkg-version"] | @tsv' \
-  dist-newstyle/cache/plan.json | sort -u > /build/units
-[ -s /build/units ] || { echo "hadolint: the build plan names no package" >&2; exit 1; }
-echo "in the binary: $(grep -c '^pre-existing' /build/units) packages of GHC's, $(grep -c '^configured' /build/units) of Hackage's, and of alpine's: $(tr '\n' ' ' < /build/linked.measured)"
+# NOTICES, COPYING.LESSER and SOURCE are every platform's (notices.sh); what
+# is this one's is written here first: musl and GCC's runtime from alpine,
+# the libffi GHC carries, and the alpine packages' own sources.
 ghc_version=$(ghc --numeric-version)
 version_of() { sed -n "s/^$1 \(.*\)-r[0-9]*\$/\1/p" /in/recipe/apk-linked; }
 musl=$(version_of musl-dev)
 gmp=$(version_of gmp-static)
 gcc=$(version_of gcc)
-# xxHash is compiled into the binary twice, by GHC's runtime (rts/Hash.c) and
-# by hashable, each from a header that carries its terms where no licence
-# file does. One text, kept by the versions of whatever compiles it in: with
-# hashable gone it is still the runtime's, under another name, read again.
-hashable=$(awk -F "${tab}" '$2 == "hashable" { print $3 }' /build/units)
-xxhash="LICENSE-xxhash-in-ghc-${ghc_version}"
-xxhash_of="GHC ${ghc_version}'s runtime compiles"
-if [ -n "${hashable}" ]; then
-  xxhash="${xxhash}-and-hashable-${hashable}"
-  xxhash_of="GHC ${ghc_version}'s runtime and hashable ${hashable} each compile"
-fi
-for text in "LICENSE-musl-${musl}" "LICENSE-gcc-runtime-${gcc}" "LICENSE-libffi-ghc-${ghc_version}" "${xxhash}" LICENSE-lgpl-3.0; do
-  [ -s "/in/recipe/licenses/${text}" ] || { echo "hadolint: no hadolint/licenses/${text} for a library the binary links" >&2; exit 1; }
-done
-
-# NOTICES: each package's own licence files, as its source carries them; a
-# package with none stops the build.
 {
   echo "hadolint is statically linked: everything below is in the binary beside"
   echo "this file. hadolint's own licence is LICENSE, the GNU GPL version 3."
-  echo
-  echo "================================================================"
-  echo "GMP ${gmp}, the GNU Multiple Precision Arithmetic Library"
-  echo "================================================================"
-  echo
-  echo "This program uses GMP, which is linked into it. GMP and its use are"
-  echo "covered by the GNU Lesser General Public License version 3, a copy of"
-  echo "which is COPYING.LESSER beside this file; the GNU General Public"
-  echo "License it refers to is LICENSE. Where GMP's source is, and how this"
-  echo "program is built again against another GMP, is in SOURCE."
-  for part in "musl ${musl}:LICENSE-musl-${musl}" "GCC ${gcc}, its runtime, under the GNU GPL version 3 (LICENSE) with this exception:LICENSE-gcc-runtime-${gcc}" \
-    "libffi, the copy GHC ${ghc_version} carries and links into its runtime:LICENSE-libffi-ghc-${ghc_version}" \
-    "xxHash, which ${xxhash_of} in:${xxhash}"; do
-    echo
-    echo "================================================================"
-    echo "${part%%:*}"
-    echo "================================================================"
-    echo
-    cat "/in/recipe/licenses/${part##*:}"
-  done
-  while IFS="${tab}" read -r type name version; do
-    echo
-    echo "================================================================"
-    echo "${name} ${version}"
-    echo "================================================================"
-    echo
-    if [ "${type}" = pre-existing ]; then
-      # GHC's runtime has no directory of its own: it is under GHC's licence.
-      [ "${name}" != rts ] || { name=ghc; version=${ghc_version}; }
-      file=$(find /opt/ghc/share/doc -path "*/${name}-${version}/LICENSE" | head -n 1)
-      [ -n "${file}" ] || { echo "hadolint: GHC ships no LICENSE for ${name} ${version}" >&2; exit 1; }
-      cat "${file}"
-    else
-      sdist="${CABAL_DIR}/packages/hackage.haskell.org/${name}/${version}/${name}-${version}.tar.gz"
-      [ -f "${sdist}" ] || { echo "hadolint: no source archive for ${name} ${version} in cabal's store" >&2; exit 1; }
-      files=$(tar -tzf "${sdist}" | awk -F/ 'NF == 2 && tolower($2) ~ /licen[sc]e|copying|notice|copyright/' | sort)
-      [ -n "${files}" ] || { echo "hadolint: ${name} ${version} carries no licence file" >&2; exit 1; }
-      for file in ${files}; do
-        tar -xzOf "${sdist}" "${file}"
-      done
-    fi
-  done < /build/units
-} > /out/NOTICES
-cp /in/recipe/licenses/LICENSE-lgpl-3.0 /out/COPYING.LESSER
-
-# SOURCE: the offer of the corresponding source, in the archive itself, every
-# component at its exact version and where its source is.
+} > /build/notices.head
+{
+  echo "musl ${musl}:LICENSE-musl-${musl}"
+  echo "GCC ${gcc}, its runtime, under the GNU GPL version 3 (LICENSE) with this exception:LICENSE-gcc-runtime-${gcc}"
+  echo "libffi, the copy GHC ${ghc_version} carries and links into its runtime:LICENSE-libffi-ghc-${ghc_version}"
+} > /build/notices.parts
 {
   echo "The corresponding source of this hadolint binary. It is statically linked:"
   echo "every component below is in it. Built by forkcloser/testbin, whose recipe"
@@ -299,18 +223,9 @@ cp /in/recipe/licenses/LICENSE-lgpl-3.0 /out/COPYING.LESSER
   echo "the packages hadolint/apk.lock names, and against another GMP by moving"
   echo "that file's gmp lines and hadolint/apk-linked's:"
   echo "  https://github.com/forkcloser/testbin"
-  echo
-  echo "hadolint, GPL-3, at commit ${commit}:"
-  echo "  ${url}"
-  echo
-  echo "GHC ${ghc_version}: its runtime and these libraries of its release:"
-  awk -F "${tab}" '$1 == "pre-existing" { printf "  %s %s\n", $2, $3 }' /build/units
-  echo "  and the libffi its runtime links (libffi-tarballs/ in the same archive),"
-  echo "  all in https://downloads.haskell.org/~ghc/${ghc_version}/ghc-${ghc_version}-src.tar.xz"
-  echo
-  echo "From Hackage, each at the version hadolint/cabal.project.freeze holds:"
-  awk -F "${tab}" '$1 == "configured" { printf "  https://hackage.haskell.org/package/%s-%s/%s-%s.tar.gz\n", $2, $3, $2, $3 }' /build/units
-  echo
+} > /build/source.head
+echo "  and the libffi its runtime links (libffi-tarballs/ in the same archive)," > /build/source.ghc
+{
   echo "From Alpine Linux, each package at its version and the commit of"
   echo "https://gitlab.alpinelinux.org/alpine/aports that built it, whose APKBUILD"
   echo "names the upstream source and the patches applied:"
@@ -320,7 +235,13 @@ cp /in/recipe/licenses/LICENSE-lgpl-3.0 /out/COPYING.LESSER
       /^$/ { if (name == want) { printf "  %s %s: main/%s at %s\n", name, version, origin, commit; found = 1 } name = "" }
       END { if (!found) exit 1 }' /lib/apk/db/installed || { echo "hadolint: ${package} is not installed" >&2; exit 1; }
   done
-} > /out/SOURCE
+} > /build/source.tail
+NOTICES_PLAN=dist-newstyle/cache/plan.json NOTICES_RECIPE=/in/recipe NOTICES_OUT=/out NOTICES_WORK=/build \
+  NOTICES_GHC_DOC=/opt/ghc/share/doc NOTICES_GMP="${gmp}" \
+  NOTICES_ALSO="of alpine's: $(tr '\n' ' ' < /build/linked.measured)" \
+  NOTICES_HEAD=/build/notices.head NOTICES_PARTS=/build/notices.parts NOTICES_SOURCE_HEAD=/build/source.head \
+  NOTICES_GHC_ALSO=/build/source.ghc NOTICES_SOURCE_TAIL=/build/source.tail \
+  HADOLINT_COMMIT="${commit}" HADOLINT_URL="${url}" sh /in/recipe/notices.sh
 
 # The kept directory is written here as root and read outside as whoever runs
 # the container.

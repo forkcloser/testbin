@@ -1,0 +1,8 @@
+# What the macOS binary is linked against, each a library macOS ships and
+# none of them in the archive: the build measures the list (otool -L) and
+# stops when it is another.
+/System/Library/Frameworks/Security.framework/Versions/A/Security
+/usr/lib/libSystem.B.dylib
+/usr/lib/libcharset.1.dylib
+/usr/lib/libffi.dylib
+/usr/lib/libiconv.2.dylib
