@@ -17,7 +17,7 @@ other uses, or covered by any compatibility promise.
 | [`erofs/`](erofs/) | `mkfs.erofs`, `fsck.erofs` (not windows) | [erofs/erofs-utils](https://github.com/erofs/erofs-utils), with [lz4](https://github.com/lz4/lz4) and [libdeflate](https://github.com/ebiggers/libdeflate) |
 | [`xz/`](xz/) | `xz` | [tukaani-project/xz](https://github.com/tukaani-project/xz) |
 | [`graphviz/`](graphviz/) | `dot` | [graphviz](https://gitlab.com/graphviz/graphviz), with [expat](https://github.com/libexpat/libexpat) |
-| [`hadolint/`](hadolint/) | `hadolint` (linux alone; a GPL-3 binary, published to be run by tests and linked by nothing) | [hadolint/hadolint](https://github.com/hadolint/hadolint), at a commit, not a release |
+| [`hadolint/`](hadolint/) | `hadolint` (linux and macOS arm64; a GPL-3 binary, published to be run by tests and linked by nothing) | [hadolint/hadolint](https://github.com/hadolint/hadolint), at a commit, not a release |
 | [`claxon/`](claxon/) | `claxon`, a FLAC decoder on Claxon | [ruuda/claxon](https://github.com/ruuda/claxon) |
 | [`symphonia/`](symphonia/) | `symphonia`, a FLAC decoder on Symphonia | [pdeljanov/Symphonia](https://github.com/pdeljanov/Symphonia) |
 
@@ -34,8 +34,8 @@ sources, and states the upstream licence its sources, patches and binaries are u
   toolchain pinned by `rust-toolchain.toml`), with the target always explicit: linux (static,
   musl) and windows, amd64 and arm64, and darwin arm64, cross-compiled from any of them. No runner
   package manager, no container. One exception: `hadolint` is a Haskell program, which nothing
-  here cross-compiles; it is built for linux alone, in a container, on a runner of each
-  architecture ([`hadolint/`](hadolint/)).
+  here cross-compiles; it is built on a runner of each platform it has, in a container on
+  linux and on the host on macOS, and not yet for windows ([`hadolint/`](hadolint/)).
 - **Third-party source only.** Everything here builds an upstream project's own sources,
   patched only where a platform needs it (`erofs/patches`, for windows); a library that ships
   no program gets the smallest one around it that exercises it (`drflac`, `foxenflac`,

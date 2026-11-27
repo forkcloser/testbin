@@ -60,6 +60,7 @@ build-matrix:
         printf '%s{"tools":"%s","runner":"ubuntu-24.04","name":"%s, linux-amd64"}' "${sep}" "${group}" "${group}"
         sep=","
         printf '%s{"tools":"%s","runner":"ubuntu-24.04-arm","name":"%s, linux-arm64"}' "${sep}" "${group}" "${group}"
+        printf '%s{"tools":"%s","runner":"macos-15","name":"%s, darwin-arm64"}' "${sep}" "${group}" "${group}"
     done
     printf ']\n'
 
@@ -584,12 +585,11 @@ _dotnet-rid platform:
         *) echo "unknown platform {{ platform }} (one of {{ platforms }})" >&2; exit 1 ;;
     esac
 
-# Build hadolint, static on musl, for the linux platform of this host's
-# architecture among those given, archived with upstream's licence into
-# $LIMEN_BUILD/dist/hadolint-<platform>.tar.gz. The other platforms given are
-# passed over: GHC builds for the machine it runs on, so the other linux
-# architecture is built on a runner of it, and there is no hadolint here for
-# macOS or windows.
+# Build hadolint for this host's own platform among those given, archived
+# with upstream's licence into $LIMEN_BUILD/dist/hadolint-<platform>.tar.gz:
+# static on musl in a container on linux, against the system's libraries on
+# macOS. The other platforms given are passed over: GHC builds for the
+# machine it runs on, so each platform is built on a runner of it.
 hadolint +targets: (_fetch "hadolint")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -598,23 +598,35 @@ hadolint +targets: (_fetch "hadolint")
         arm64 | aarch64) arch=arm64 ;;
         *) echo "hadolint: no build on $(uname -m)" >&2; exit 1 ;;
     esac
+    case "$(uname -s)" in
+        Linux) host="linux-${arch}" ;;
+        Darwin) host="darwin-${arch}" ;;
+        *) echo "hadolint: no build on $(uname -s)" >&2; exit 1 ;;
+    esac
+    [ "${host}" != darwin-amd64 ] || { echo "hadolint: no build on an Intel mac" >&2; exit 1; }
     version=$(limen pins get hadolint version)
     src="${LIMEN_BUILD}/src/hadolint-${version}"
     mkdir -p "${LIMEN_BUILD}/dist"
     set -- {{ targets }}
     for platform in "$@"; do
-        if [ "${platform}" != "linux-${arch}" ]; then
-            echo "hadolint: ${platform} is not built on this host (linux-${arch} is)"
+        if [ "${platform}" != "${host}" ]; then
+            echo "hadolint: ${platform} is not built on this host (${host} is)"
             continue
         fi
         just _fetch-file "ghc-${platform}"
         just _fetch-file "cabal-${platform}"
         out="${LIMEN_BUILD}/hadolint/${platform}"
         rm -rf "${out}"
-        HADOLINT_COMMIT="${version}" HADOLINT_URL="$(limen pins get hadolint url)" hadolint/build.sh "${src}" \
-            "${LIMEN_BUILD}/src/ghc-${platform}-$(limen pins get "ghc-${platform}" version).tar.xz" \
-            "${LIMEN_BUILD}/src/cabal-${platform}-$(limen pins get "cabal-${platform}" version).tar.xz" \
-            "${arch}" "${out}/bin" "${LIMEN_BUILD}/kept/hadolint/${platform}"
+        ghc="${LIMEN_BUILD}/src/ghc-${platform}-$(limen pins get "ghc-${platform}" version).tar.xz"
+        cabal="${LIMEN_BUILD}/src/cabal-${platform}-$(limen pins get "cabal-${platform}" version).tar.xz"
+        kept="${LIMEN_BUILD}/kept/hadolint/${platform}"
+        export HADOLINT_COMMIT="${version}"
+        HADOLINT_URL="$(limen pins get hadolint url)"
+        export HADOLINT_URL
+        case "${platform}" in
+            linux-*) hadolint/build.sh "${src}" "${ghc}" "${cabal}" "${arch}" "${out}/bin" "${kept}" ;;
+            darwin-*) hadolint/build-darwin.sh "${src}" "${ghc}" "${cabal}" "${out}/bin" "${kept}" ;;
+        esac
         # Run where it was built, which is always here: no leg of `just test`
         # pays for a compiler's build to do it.
         hadolint/smoke.sh "${out}/bin"
@@ -644,8 +656,8 @@ hadolint-test:
     set -euo pipefail
     platform=$(just _host-platform)
     case "${platform}" in
-        linux-*) ;;
-        *) echo "hadolint: built for linux alone, nothing to run on ${platform}"; exit 0 ;;
+        linux-* | darwin-arm64) ;;
+        *) echo "hadolint: not built on ${platform}, nothing to run"; exit 0 ;;
     esac
     just hadolint "${platform}"
     hadolint/smoke.sh "${LIMEN_BUILD}/hadolint/${platform}/bin"

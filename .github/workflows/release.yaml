@@ -3,8 +3,9 @@
 # per-job permissions, bash everywhere).
 #
 # A pushed v* tag builds every tool for every platform on linux hosts (zig
-# cross-compiles them all but hadolint, which a container builds on a runner
-# of each linux architecture), one runner a group of tools, runs each archive's
+# cross-compiles them all but hadolint, which is built on a runner of each
+# platform it has: in a container on linux, on the host on macOS), one runner a
+# group of tools, runs each archive's
 # binaries on its own platform, then attests every archive and checksums.txt
 # and attaches them to the release. workflow_dispatch is the dry run: build
 # and smoke, no publish.
@@ -64,7 +65,8 @@ jobs:
         include: ${{ fromJSON(needs.plan.outputs.groups) }}
     name: build (${{ matrix.name }})
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 40
+    # hadolint from nothing is a compiler's work: its 97 dependencies.
+    timeout-minutes: 90
     permissions:
       contents: read
     steps:
@@ -96,7 +98,7 @@ jobs:
         run: |
           read -r -a tools <<< "$TOOLS"
           just build-group "${tools[@]}"
-          echo "name=${TOOLS// /+}-${RUNNER_ARCH}" >> "$GITHUB_OUTPUT"
+          echo "name=${TOOLS// /+}-${RUNNER_OS}-${RUNNER_ARCH}" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-${{ steps.group.outputs.name }}
@@ -149,9 +151,9 @@ jobs:
           bash erofs/smoke.sh "unpacked/erofs-${PLATFORM}"
           bash xz/smoke.sh "unpacked/xz-${PLATFORM}"
           bash graphviz/smoke.sh "unpacked/graphviz-${PLATFORM}"
-          # hadolint is built for linux alone.
+          # hadolint is not built for windows.
           case "${PLATFORM}" in
-            linux-*) bash hadolint/smoke.sh "unpacked/hadolint-${PLATFORM}" ;;
+            linux-* | darwin-arm64) bash hadolint/smoke.sh "unpacked/hadolint-${PLATFORM}" ;;
             *) ;;
           esac
           bash claxon/smoke.sh "unpacked/claxon-${PLATFORM}" "${flac}"
