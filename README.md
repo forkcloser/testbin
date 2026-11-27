@@ -68,9 +68,7 @@ holds one directory of its own name, with the tool's binaries (`.exe` on windows
 licence notices of what they are built from. Its name carries no upstream version, so a
 consumer's pin moves with the tag alone: a repository consumes a tool through its `pins.yaml`,
 one entry per platform its tests run on, with
-`verify: github-attestation packcloser/testbin packcloser/testbin/.github/workflows/release.yaml`
-(releases up to `v0.5.1` were cut when this repository was `forkcloser/testbin` and are signed
-under that name: a pin on one of those names `forkcloser/testbin` in both places),
+`verify: github-attestation packcloser/testbin packcloser/testbin/.github/workflows/release.yaml`,
 and a recipe that fetches the host's archive, checks it against the pinned sha256 and puts the
 binary on the PATH its tests see, under the name the tests expect. Which upstream version a
 release carries is in its notes: the corresponding source of each tool's binaries is upstream's
